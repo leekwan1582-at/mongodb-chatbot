@@ -1,0 +1,2868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mongosh Tutor & Interactive Sandbox - Learn the MongoDB Shell</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-mono-code {
+      font-family: 'Fira Code', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #001e2b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #113240;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00ed64;
+    }
+    .syntax-key { color: #38bdf8; }
+    .syntax-string { color: #fde047; }
+    .syntax-number { color: #c084fc; }
+    .syntax-boolean { color: #f472b6; }
+    .syntax-id { color: #00ed64; font-weight: 600; }
+    .syntax-null { color: #94a3b8; }
+    .chat-bubble-user {
+      background: linear-gradient(135deg, #00684a 0%, #023430 100%);
+      border: 1px solid #00ed64;
+    }
+    .chat-bubble-bot {
+      background: #0b2936;
+      border: 1px solid #113240;
+    }
+  </style>
+</head>
+<body class="bg-[#001e2b] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-[#00ed64] selection:text-[#001e2b]">
+
+  <!-- TOP HEADER -->
+  <header class="bg-[#0b2936] border-b border-[#113240] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 shadow-md">
+    <div class="flex items-center gap-3">
+      <!-- MongoDB Leaf SVG -->
+      <div class="w-9 h-9 rounded-lg bg-[#023430] border border-[#00ed64]/40 flex items-center justify-center p-1.5 shadow-sm">
+        <svg viewBox="0 0 24 24" class="w-full h-full fill-[#00ed64]">
+          <path d="M12 1.5C11.5 2.5 7.5 9.5 7.5 14c0 3 2 5.5 4.5 6.5 2.5-1 4.5-3.5 4.5-6.5 0-4.5-4-11.5-4.5-12.5z"/>
+          <path d="M12 2v18.5c.2-.08.4-.17.6-.26 2.1-1 3.9-3.3 3.9-6.24 0-4.1-3.6-10.4-4.5-12z" opacity="0.4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+            <span>mongosh</span>
+            <span class="text-[#00ed64]">Tutor</span>
+          </h1>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-[#00ed64]/10 text-[#00ed64] font-mono-code font-semibold border border-[#00ed64]/20">v2.3.8</span>
+        </div>
+        <p class="text-xs text-slate-400 hidden sm:block">Interactive MongoDB Shell learning chatbot & sandbox playground</p>
+      </div>
+    </div>
+
+    <!-- Middle Status & Current DB -->
+    <div class="flex items-center gap-2 sm:gap-4 text-xs font-mono-code">
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#001e2b] border border-[#113240]">
+        <span class="w-2 h-2 rounded-full bg-[#00ed64] animate-pulse"></span>
+        <span class="text-slate-300">Connected:</span>
+        <span class="text-[#00ed64]">127.0.0.1:27017</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#001e2b] border border-[#113240]">
+        <span class="text-slate-400">db:</span>
+        <select id="headerDbSelect" class="bg-transparent text-[#00ed64] font-semibold focus:outline-none cursor-pointer">
+          <option value="shop" class="bg-[#0b2936] text-white">shop</option>
+          <option value="sample_university" class="bg-[#0b2936] text-white">sample_university</option>
+          <option value="analytics" class="bg-[#0b2936] text-white">analytics</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Challenge Progress Badge -->
+      <div id="challengeProgressBadge" class="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#023430] border border-[#00ed64]/30 text-xs">
+        <span class="text-[#00ed64] font-semibold">Challenges:</span>
+        <span id="challengeProgressText" class="font-mono-code text-white">0 / 6</span>
+      </div>
+
+      <!-- AI Provider Key Button -->
+      <button id="btnTopAiConfig" title="Configure Live AI Provider (Bring Your Own Key)" class="px-2.5 py-1.5 rounded-lg bg-[#023430] hover:bg-[#00ed64] hover:text-[#001e2b] text-[#00ed64] border border-[#00ed64]/40 text-xs font-semibold transition flex items-center gap-1.5 shadow">
+        <span>⚡</span>
+        <span class="hidden sm:inline">AI Keys (BYOK)</span>
+      </button>
+
+      <!-- Reset DB Button -->
+      <button id="btnResetDb" title="Reset all databases to initial state" class="px-2.5 py-1.5 rounded-lg bg-[#113240] hover:bg-[#1a4457] text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>Reset Data</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER: DUAL PANE -->
+  <main class="flex-1 max-w-[1700px] w-full mx-auto p-2 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+    <!-- LEFT PANE: AI TUTOR CHATBOT (5 cols on lg) -->
+    <section class="lg:col-span-5 flex flex-col bg-[#0b2936] rounded-xl border border-[#113240] shadow-xl overflow-hidden h-[86vh]">
+      
+      <!-- Chatbot Header -->
+      <div class="p-3 bg-[#023430]/60 border-b border-[#113240] flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="relative">
+            <div id="botAvatarIcon" class="w-8 h-8 rounded-full bg-[#00ed64] flex items-center justify-center text-[#001e2b] font-bold text-xs shadow">
+              🤖
+            </div>
+            <span id="botPulseDot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#00ed64] border-2 border-[#0b2936]"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-bold text-white">MongoBot</h2>
+              <span id="botProviderBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-[#00ed64]/10 text-[#00ed64] border border-[#00ed64]/20 font-medium">Built-in Knowledge</span>
+            </div>
+            <p id="botStatusSubtext" class="text-[11px] text-slate-400">Ask questions, request examples, or solve interactive quizzes</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <!-- AI Config shortcut in chat -->
+          <button id="btnChatAiConfig" title="Configure AI Provider" class="px-2 py-1 rounded bg-[#113240] hover:bg-[#1a4457] text-[#00ed64] border border-[#00ed64]/30 text-xs font-medium transition flex items-center gap-1">
+            <span>⚙️</span>
+            <span id="chatAiModelPill" class="text-[10px]">Built-in</span>
+          </button>
+          <button id="btnClearChat" title="Clear chat history" class="p-1.5 rounded hover:bg-[#113240] text-slate-400 hover:text-slate-200 text-xs transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Curriculum Track Selector Quick Bar -->
+      <div class="px-3 py-2 bg-[#001e2b]/80 border-b border-[#113240] flex items-center gap-2 overflow-x-auto text-xs whitespace-nowrap">
+        <span class="text-slate-400 font-medium text-[11px] uppercase tracking-wider">Tracks:</span>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="basics">1. Basics & Nav</button>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="crud_find">2. Queries ($find)</button>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="operators">3. Operators ($gt, $in)</button>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="crud_update">4. Updates ($set, $inc)</button>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="aggregation">5. Aggregation ($group)</button>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="indexes">6. Indexes & Explain</button>
+        <button class="track-btn px-2.5 py-1 rounded-full bg-[#113240] hover:bg-[#00ed64]/20 hover:text-[#00ed64] text-slate-300 text-[11px] transition" data-topic="mongosh_features">7. mongosh vs mongo</button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="chatMessages" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 text-xs sm:text-sm">
+      </div>
+
+      <!-- Quick Suggestion Pills -->
+      <div id="quickPillsContainer" class="px-3 py-2 bg-[#001e2b]/60 border-t border-[#113240] flex items-center gap-1.5 overflow-x-auto text-xs whitespace-nowrap">
+        <button class="pill-prompt px-2.5 py-1 rounded-lg bg-[#00684a]/60 hover:bg-[#00ed64]/30 text-[#00ed64] border border-[#00ed64]/40 text-[11px] font-semibold transition" data-query="Generate a mongosh query to find top spending customers">✨ NL to Query</button>
+        <button class="pill-prompt px-2.5 py-1 rounded-lg bg-[#113240]/80 hover:bg-[#00ed64]/20 text-slate-300 hover:text-[#00ed64] border border-slate-700/60 text-[11px] transition" data-query="How do I query documents with find()?">🔍 find() syntax</button>
+        <button class="pill-prompt px-2.5 py-1 rounded-lg bg-[#113240]/80 hover:bg-[#00ed64]/20 text-slate-300 hover:text-[#00ed64] border border-slate-700/60 text-[11px] transition" data-query="How does the aggregation pipeline work with $match and $group?">⚡ Aggregation pipeline</button>
+        <button class="pill-prompt px-2.5 py-1 rounded-lg bg-[#113240]/80 hover:bg-[#00ed64]/20 text-slate-300 hover:text-[#00ed64] border border-slate-700/60 text-[11px] transition" data-query="Explain updating with $set, $inc and upsert">🔄 Update operators</button>
+        <button class="pill-prompt px-2.5 py-1 rounded-lg bg-[#113240]/80 hover:bg-[#00ed64]/20 text-slate-300 hover:text-[#00ed64] border border-slate-700/60 text-[11px] transition" data-query="What makes mongosh different from the old mongo shell?">💡 mongosh features</button>
+        <button class="pill-prompt px-2.5 py-1 rounded-lg bg-[#113240]/80 hover:bg-[#00ed64]/20 text-slate-300 hover:text-[#00ed64] border border-slate-700/60 text-[11px] transition" data-query="Give me a practice challenge!">🎯 Quiz me!</button>
+      </div>
+
+      <!-- Chat Input Form -->
+      <div class="p-3 bg-[#0b2936] border-t border-[#113240]">
+        <form id="chatForm" class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <input 
+              type="text" 
+              id="chatInput" 
+              placeholder="Ask anything about mongosh (or type in plain English to generate a query)..." 
+              class="w-full bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition shadow-inner"
+              autocomplete="off"
+            />
+          </div>
+          <button 
+            type="submit" 
+            id="chatSendBtn"
+            class="px-4 py-2.5 bg-[#00ed64] hover:bg-[#00c853] text-[#001e2b] font-semibold rounded-lg text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow"
+          >
+            <span>Ask</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- RIGHT PANE: WORKSPACE TABS (7 cols on lg) -->
+    <section class="lg:col-span-7 flex flex-col bg-[#0b2936] rounded-xl border border-[#113240] shadow-xl overflow-hidden h-[86vh]">
+      
+      <!-- Tab Bar -->
+      <div class="bg-[#023430]/70 border-b border-[#113240] px-3 pt-2 flex items-center justify-between gap-2 overflow-x-auto">
+        <div class="flex items-center gap-1">
+          <button id="tabBtnTerminal" class="tab-btn px-3.5 py-2 rounded-t-lg font-mono-code text-xs font-semibold flex items-center gap-2 border-t-2 border-[#00ed64] bg-[#001e2b] text-white">
+            <span class="text-[#00ed64]">&gt;_</span>
+            <span>mongosh Terminal</span>
+          </button>
+          <button id="tabBtnExplorer" class="tab-btn px-3.5 py-2 rounded-t-lg font-mono-code text-xs font-medium flex items-center gap-2 border-t-2 border-transparent text-slate-400 hover:text-white hover:bg-[#001e2b]/40">
+            <span>🗄️</span>
+            <span>DB Explorer</span>
+          </button>
+          <button id="tabBtnChallenges" class="tab-btn px-3.5 py-2 rounded-t-lg font-mono-code text-xs font-medium flex items-center gap-2 border-t-2 border-transparent text-slate-400 hover:text-white hover:bg-[#001e2b]/40">
+            <span>🎯</span>
+            <span>Challenges</span>
+            <span id="tabChallengeBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-[#00ed64]/20 text-[#00ed64] text-[10px] font-bold">6</span>
+          </button>
+          <button id="tabBtnCheatsheet" class="tab-btn px-3.5 py-2 rounded-t-lg font-mono-code text-xs font-medium flex items-center gap-2 border-t-2 border-transparent text-slate-400 hover:text-white hover:bg-[#001e2b]/40">
+            <span>📖</span>
+            <span>Cheatsheet</span>
+          </button>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-2 pb-1.5">
+          <span class="text-[11px] text-slate-400">Node v20 JS Engine</span>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT PANELS -->
+      <div class="flex-1 overflow-hidden relative bg-[#001219]">
+
+        <!-- TAB 1: TERMINAL -->
+        <div id="panelTerminal" class="absolute inset-0 flex flex-col h-full">
+          <!-- Terminal Top Bar -->
+          <div class="bg-[#001e2b] px-3.5 py-2 border-b border-[#113240] flex items-center justify-between text-xs font-mono-code text-slate-300">
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-[#ef4444]/80 inline-block"></span>
+                <span class="w-3 h-3 rounded-full bg-[#f59e0b]/80 inline-block"></span>
+                <span class="w-3 h-3 rounded-full bg-[#10b981]/80 inline-block"></span>
+              </div>
+              <span class="text-slate-400 font-semibold text-[11px] ml-2">mongosh session: <span id="termDbLabel" class="text-[#00ed64]">shop</span></span>
+            </div>
+
+            <!-- Terminal helper buttons -->
+            <div class="flex items-center gap-1.5 text-[11px]">
+              <button id="btnSampleFind" class="px-2 py-0.8 rounded bg-[#113240] hover:bg-[#1a4457] text-slate-300 hover:text-white transition">find() demo</button>
+              <button id="btnSampleAgg" class="px-2 py-0.8 rounded bg-[#113240] hover:bg-[#1a4457] text-slate-300 hover:text-white transition">aggregate() demo</button>
+              <button id="btnClearTerm" class="px-2 py-0.8 rounded bg-[#113240] hover:bg-rose-900/60 text-slate-300 hover:text-rose-200 transition">cls</button>
+            </div>
+          </div>
+
+          <!-- Terminal Output Screen -->
+          <div id="terminalOutput" class="flex-1 overflow-y-auto p-3 sm:p-4 font-mono-code text-xs sm:text-[13px] leading-relaxed space-y-2 select-text">
+          </div>
+
+          <!-- Terminal Active Prompt Line -->
+          <div class="p-2 sm:p-3 bg-[#00161f] border-t border-[#113240] flex items-center gap-2 font-mono-code text-xs sm:text-[13px]">
+            <span id="promptPrefix" class="text-[#00ed64] font-bold select-none whitespace-nowrap">shop&gt;</span>
+            <input 
+              type="text" 
+              id="termInput" 
+              class="flex-1 bg-transparent text-white font-mono-code focus:outline-none placeholder-slate-600" 
+              placeholder="Type mongosh command (e.g. show dbs, db.products.find())..." 
+              autocomplete="off" 
+              spellcheck="false"
+            />
+            <button id="btnRunTerm" class="px-2.5 py-1 bg-[#00ed64] hover:bg-[#00c853] text-[#001e2b] rounded font-semibold text-xs transition">
+              Run ↵
+            </button>
+          </div>
+
+          <!-- Autocomplete / Command shortcuts hint footer -->
+          <div class="px-3 py-1 bg-[#000f14] border-t border-[#113240]/40 flex items-center justify-between text-[10px] font-mono-code text-slate-400">
+            <div class="flex items-center gap-2">
+              <span>Keys: <kbd class="px-1 py-0.5 rounded bg-[#113240] text-slate-300">↑</kbd><kbd class="px-1 py-0.5 rounded bg-[#113240] text-slate-300">↓</kbd> History</span>
+              <span>• <kbd class="px-1 py-0.5 rounded bg-[#113240] text-slate-300">Tab</kbd> Autocomplete</span>
+              <span>• <kbd class="px-1 py-0.5 rounded bg-[#113240] text-slate-300">cls</kbd> Clear</span>
+            </div>
+            <div id="termStatusMsg" class="text-[#00ed64]">Ready</div>
+          </div>
+        </div>
+
+        <!-- TAB 2: DATABASE EXPLORER -->
+        <div id="panelExplorer" class="hidden absolute inset-0 flex flex-col h-full bg-[#001e2b] p-3 overflow-y-auto">
+          <!-- Explorer Header Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#113240]">
+            <div class="flex items-center gap-3">
+              <label class="text-xs text-slate-400 font-medium">Database:</label>
+              <select id="explorerDbSelect" class="bg-[#0b2936] text-white border border-[#113240] rounded px-2.5 py-1 text-xs font-mono-code focus:outline-none focus:border-[#00ed64]">
+                <option value="shop">shop</option>
+                <option value="sample_university">sample_university</option>
+                <option value="analytics">analytics</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btnRefreshExplorer" class="px-2.5 py-1 rounded bg-[#113240] hover:bg-[#1a4457] text-xs text-slate-300 transition flex items-center gap-1">
+                <span>🔄</span> Refresh
+              </button>
+              <button id="btnAddDocModalBtn" class="px-2.5 py-1 rounded bg-[#00684a] hover:bg-[#00ed64] hover:text-[#001e2b] text-xs text-white font-medium transition flex items-center gap-1">
+                <span>➕</span> Insert Document
+              </button>
+            </div>
+          </div>
+
+          <!-- Explorer Body: Collections list & Documents -->
+          <div class="flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 pt-3 overflow-hidden">
+            <!-- Left subcol: Collections -->
+            <div class="md:col-span-4 bg-[#0b2936] rounded-lg border border-[#113240] p-2.5 flex flex-col">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-[#113240]">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Collections</span>
+                <span id="collectionCountBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-[#113240] text-slate-300 font-mono-code">3</span>
+              </div>
+              <div id="explorerCollectionsList" class="space-y-1 overflow-y-auto flex-1 text-xs font-mono-code">
+              </div>
+            </div>
+
+            <!-- Right subcol: Document Cards & Filter -->
+            <div class="md:col-span-8 bg-[#0b2936] rounded-lg border border-[#113240] p-2.5 flex flex-col overflow-hidden">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-[#113240] gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-white flex items-center gap-1">
+                    <span>Collection:</span>
+                    <span id="activeCollectionLabel" class="text-[#00ed64] font-mono-code">products</span>
+                  </span>
+                  <span id="docCountBadge" class="text-[10px] px-2 py-0.2 rounded-full bg-[#00ed64]/20 text-[#00ed64] font-mono-code">5 docs</span>
+                </div>
+                <!-- Filter input -->
+                <input 
+                  type="text" 
+                  id="explorerDocSearch" 
+                  placeholder="Filter documents (e.g. name, price)..." 
+                  class="bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded px-2.5 py-1 text-xs text-white focus:outline-none w-44"
+                />
+              </div>
+
+              <!-- Documents view container -->
+              <div id="explorerDocsContainer" class="flex-1 overflow-y-auto space-y-2 pr-1 font-mono-code text-xs">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: CHALLENGES -->
+        <div id="panelChallenges" class="hidden absolute inset-0 flex flex-col h-full bg-[#001e2b] p-3 sm:p-4 overflow-y-auto space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-[#113240]">
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                <span>🎯 mongosh Interactive Challenges</span>
+              </h3>
+              <p class="text-xs text-slate-400">Put your skills to the test with real hands-on shell queries. Solve in the terminal or verify below!</p>
+            </div>
+            <div class="text-right">
+              <span id="challengeSummaryText" class="text-xs font-bold text-[#00ed64]">0 of 6 Completed</span>
+              <div class="w-32 bg-[#113240] h-2 rounded-full mt-1 overflow-hidden">
+                <div id="challengeProgressBar" class="bg-[#00ed64] h-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Challenge cards list -->
+          <div id="challengesList" class="space-y-3">
+          </div>
+        </div>
+
+        <!-- TAB 4: CHEATSHEET -->
+        <div id="panelCheatsheet" class="hidden absolute inset-0 flex flex-col h-full bg-[#001e2b] p-3 sm:p-4 overflow-y-auto space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-[#113240]">
+            <div>
+              <h3 class="text-sm sm:text-base font-bold text-white">📖 mongosh Quick Reference & Cheatsheet</h3>
+              <p class="text-xs text-slate-400">Click "Run in Shell" to try any command live in the sandbox terminal.</p>
+            </div>
+            <input 
+              type="text" 
+              id="cheatSearchInput" 
+              placeholder="Search syntax (e.g. $gt, group, insert)..." 
+              class="bg-[#0b2936] border border-[#113240] focus:border-[#00ed64] rounded px-3 py-1.5 text-xs text-white focus:outline-none w-52"
+            />
+          </div>
+
+          <div id="cheatsheetGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- INSERT DOCUMENT MODAL -->
+  <div id="insertDocModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#0b2936] border border-[#113240] rounded-xl max-w-lg w-full p-4 sm:p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-[#113240]">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span>➕ Insert Document to:</span>
+          <span id="modalColName" class="text-[#00ed64] font-mono-code">products</span>
+        </h3>
+        <button id="btnCloseModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <div class="py-3">
+        <label class="block text-xs text-slate-300 font-medium mb-1">Document JSON (BSON):</label>
+        <textarea 
+          id="modalDocJson" 
+          rows="8" 
+          class="w-full bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded-lg p-3 font-mono-code text-xs text-emerald-300 focus:outline-none"
+        >{
+  "name": "Mechanical Keyboard RGB",
+  "category": "Electronics",
+  "price": 99.99,
+  "stock": 50,
+  "rating": 4.7
+}</textarea>
+        <p class="text-[11px] text-slate-400 mt-1">An `_id` will be automatically generated if omitted.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-[#113240]">
+        <button id="btnCancelModal" class="px-3 py-1.5 rounded bg-[#113240] hover:bg-[#1a4457] text-xs text-slate-300 transition">Cancel</button>
+        <button id="btnConfirmInsertDoc" class="px-4 py-1.5 rounded bg-[#00ed64] hover:bg-[#00c853] text-[#001e2b] font-semibold text-xs transition">Insert Document</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI PROVIDER SETTINGS MODAL (BYOK) -->
+  <div id="aiSettingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#0b2936] border border-[#113240] rounded-xl max-w-lg w-full p-4 sm:p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-[#113240]">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-[#00ed64]/10 border border-[#00ed64]/30 flex items-center justify-center text-sm">
+            ⚡
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">AI Provider Settings (BYOK)</h3>
+            <p class="text-[11px] text-slate-400">Bring your own key for live generative assistance & query authoring</p>
+          </div>
+        </div>
+        <button id="btnCloseAiModal" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <!-- Provider Select -->
+        <div>
+          <label class="block text-slate-300 font-medium mb-1">AI Provider:</label>
+          <select id="aiProviderSelect" class="w-full bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded-lg p-2.5 text-white font-medium focus:outline-none">
+            <option value="built_in">Built-in Knowledge Base (Offline, No API key needed)</option>
+            <option value="gemini">Google Gemini API (Gemini 1.5 Flash / Pro)</option>
+            <option value="openai">OpenAI API (GPT-4o mini / GPT-4o)</option>
+            <option value="custom">Custom / Local LLM (Ollama, LM Studio, Open-WebUI)</option>
+          </select>
+        </div>
+
+        <!-- API Key input -->
+        <div id="aiApiKeyGroup" class="hidden space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="text-slate-300 font-medium">API Key:</label>
+            <a id="aiKeyGetLink" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-sky-400 hover:text-sky-300 underline">Get API Key ↗</a>
+          </div>
+          <div class="relative">
+            <input 
+              type="password" 
+              id="aiApiKeyInput" 
+              placeholder="Paste your API key here..." 
+              class="w-full bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded-lg px-3 py-2 text-white font-mono-code focus:outline-none pr-10"
+              autocomplete="off"
+            />
+            <button type="button" id="btnToggleKeyVisibility" class="absolute right-2.5 top-2 text-slate-400 hover:text-white text-xs">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <!-- Model selection input -->
+        <div id="aiModelGroup" class="hidden space-y-1">
+          <label class="text-slate-300 font-medium">Model Name:</label>
+          <input 
+            type="text" 
+            id="aiModelInput" 
+            placeholder="e.g. gemini-1.5-flash or gpt-4o-mini" 
+            value="gemini-1.5-flash" 
+            class="w-full bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded-lg px-3 py-2 text-white font-mono-code focus:outline-none"
+          />
+        </div>
+
+        <!-- Custom endpoint URL (for Ollama / local LLM) -->
+        <div id="aiEndpointGroup" class="hidden space-y-1">
+          <label class="text-slate-300 font-medium">Endpoint URL:</label>
+          <input 
+            type="text" 
+            id="aiEndpointInput" 
+            placeholder="http://localhost:11434/v1/chat/completions" 
+            value="http://localhost:11434/v1/chat/completions" 
+            class="w-full bg-[#001e2b] border border-[#113240] focus:border-[#00ed64] rounded-lg px-3 py-2 text-white font-mono-code focus:outline-none"
+          />
+          <p class="text-[10px] text-slate-400">Ensure CORS is enabled on Ollama (`OLLAMA_ORIGINS=*`) if connecting from the browser.</p>
+        </div>
+
+        <!-- Temperature slider -->
+        <div id="aiTempGroup" class="hidden space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="text-slate-300 font-medium">Creativity (Temperature):</label>
+            <span id="aiTempVal" class="text-slate-400 font-mono-code">0.2</span>
+          </div>
+          <input type="range" id="aiTempSlider" min="0" max="1" step="0.1" value="0.2" class="w-full accent-[#00ed64]">
+        </div>
+
+        <!-- Privacy & LocalStorage notice -->
+        <div class="p-2.5 rounded-lg bg-[#001e2b] border border-[#113240] text-[11px] text-slate-400 space-y-1">
+          <div class="flex items-center gap-1.5 text-slate-300 font-semibold">
+            <span>🔒</span> <span>Local Browser Storage Privacy</span>
+          </div>
+          <p>Your API key is stored strictly on your local machine via browser <code class="text-emerald-400">localStorage</code> and transmitted directly to the chosen LLM provider. No keys are ever routed through or stored on external servers.</p>
+        </div>
+
+        <!-- Connection Test Status Box -->
+        <div id="aiTestResultBox" class="hidden p-2 rounded text-xs"></div>
+      </div>
+
+      <!-- Modal Action Buttons -->
+      <div class="flex items-center justify-between pt-2 border-t border-[#113240] gap-2">
+        <button id="btnClearAiConfig" class="px-3 py-1.5 rounded bg-[#113240] hover:bg-rose-900/50 text-xs text-rose-300 transition">
+          Reset to Offline
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="btnTestAiConnection" class="px-3 py-1.5 rounded bg-[#113240] hover:bg-[#1a4457] text-xs text-slate-200 transition flex items-center gap-1">
+            <span>🧪</span> Test Key
+          </button>
+          <button id="btnSaveAiSettings" class="px-4 py-1.5 rounded bg-[#00ed64] hover:bg-[#00c853] text-[#001e2b] font-semibold text-xs transition">
+            Save & Activate
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // --- DATABASE STATE ---
+    const INITIAL_DATABASES = {
+      shop: {
+        products: [
+          { _id: "ObjectId('65a10101d4e5f6001')", name: "Wireless Mechanical Keyboard", category: "Electronics", price: 89.99, stock: 45, rating: 4.8, tags: ["pc", "bluetooth", "rgb"] },
+          { _id: "ObjectId('65a10101d4e5f6002')", name: "Ergonomic Vertical Mouse", category: "Electronics", price: 49.99, stock: 120, rating: 4.5, tags: ["pc", "usb"] },
+          { _id: "ObjectId('65a10101d4e5f6003')", name: "USB-C Dual 4K Docking Station", category: "Accessories", price: 129.50, stock: 15, rating: 4.2, tags: ["dock", "usb-c"] },
+          { _id: "ObjectId('65a10101d4e5f6004')", name: "Noise Cancelling Headphones", category: "Audio", price: 199.00, stock: 30, rating: 4.9, tags: ["audio", "wireless"] },
+          { _id: "ObjectId('65a10101d4e5f6005')", name: "Desk Mat Extended XXL", category: "Accessories", price: 24.99, stock: 85, rating: 4.6, tags: ["desk", "fabric"] }
+        ],
+        customers: [
+          { _id: "ObjectId('65a10202d4e5f6011')", name: "Alex Rivera", email: "alex@example.com", membership: "Gold", city: "Seattle", ordersCount: 14, totalSpent: 1420 },
+          { _id: "ObjectId('65a10202d4e5f6012')", name: "Sam Chen", email: "sam.c@example.com", membership: "Silver", city: "San Francisco", ordersCount: 5, totalSpent: 480 },
+          { _id: "ObjectId('65a10202d4e5f6013')", name: "Taylor Swift", email: "tswift@example.com", membership: "Platinum", city: "New York", ordersCount: 42, totalSpent: 8900 },
+          { _id: "ObjectId('65a10202d4e5f6014')", name: "Jordan Lee", email: "jordan@example.com", membership: "Bronze", city: "Austin", ordersCount: 2, totalSpent: 75 }
+        ],
+        orders: [
+          { _id: "ObjectId('65a10303d4e5f6021')", customer: "Alex Rivera", status: "Delivered", total: 139.98, date: "2026-10-12" },
+          { _id: "ObjectId('65a10303d4e5f6022')", customer: "Taylor Swift", status: "Processing", total: 428.50, date: "2026-11-01" },
+          { _id: "ObjectId('65a10303d4e5f6023')", customer: "Sam Chen", status: "Delivered", total: 49.99, date: "2026-10-28" }
+        ]
+      },
+      sample_university: {
+        students: [
+          { _id: "ObjectId('65b20101d4e5f6101')", name: "Elena Rostova", major: "Computer Science", gpa: 3.85, year: 3, credits: 78 },
+          { _id: "ObjectId('65b20101d4e5f6102')", name: "Marcus Vance", major: "Data Engineering", gpa: 3.60, year: 2, credits: 45 },
+          { _id: "ObjectId('65b20101d4e5f6103')", name: "Priya Patel", major: "Computer Science", gpa: 3.95, year: 4, credits: 112 },
+          { _id: "ObjectId('65b20101d4e5f6104')", name: "Lucas Scott", major: "Electrical Engineering", gpa: 3.20, year: 1, credits: 18 }
+        ],
+        courses: [
+          { _id: "ObjectId('65b20202d4e5f6111')", code: "CS101", title: "Introduction to Algorithms", department: "Computer Science", credits: 4 },
+          { _id: "ObjectId('65b20202d4e5f6112')", code: "DB301", title: "Modern NoSQL Databases", department: "Computer Science", credits: 3 },
+          { _id: "ObjectId('65b20202d4e5f6113')", code: "DE202", title: "Data Pipelines & ETL", department: "Data Engineering", credits: 3 }
+        ]
+      },
+      analytics: {
+        events: [
+          { _id: "ObjectId('65c30101d4e5f6201')", type: "page_view", path: "/catalog", ip: "192.168.1.10", timestamp: "2026-11-05T08:12:00Z" },
+          { _id: "ObjectId('65c30101d4e5f6202')", type: "add_to_cart", productId: "65a10101d4e5f6001", ip: "192.168.1.10", timestamp: "2026-11-05T08:15:30Z" },
+          { _id: "ObjectId('65c30101d4e5f6203')", type: "purchase", amount: 89.99, ip: "192.168.1.10", timestamp: "2026-11-05T08:18:00Z" }
+        ]
+      }
+    };
+
+    let dbState = JSON.parse(JSON.stringify(INITIAL_DATABASES));
+    let currentDb = 'shop';
+    let commandHistory = [];
+    let historyIndex = -1;
+    let completedChallenges = new Set();
+
+    // --- AI CONFIGURATION STATE (BYOK) ---
+    let aiConfig = {
+      provider: 'built_in', // 'built_in', 'gemini', 'openai', 'custom'
+      apiKey: '',
+      model: 'gemini-1.5-flash',
+      endpoint: 'http://localhost:11434/v1/chat/completions',
+      temperature: 0.2
+    };
+
+    function loadSavedAiConfig() {
+      try {
+        const saved = localStorage.getItem('mongosh_tutor_ai_config');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          aiConfig = Object.assign(aiConfig, parsed);
+        }
+      } catch (e) {}
+      updateAiConfigUI();
+    }
+
+    function saveAiConfig() {
+      try {
+        localStorage.setItem('mongosh_tutor_ai_config', JSON.stringify(aiConfig));
+      } catch (e) {}
+      updateAiConfigUI();
+    }
+
+    function updateAiConfigUI() {
+      const badge = document.getElementById('botProviderBadge');
+      const pill = document.getElementById('chatAiModelPill');
+      const avatar = document.getElementById('botAvatarIcon');
+      const subtext = document.getElementById('botStatusSubtext');
+
+      if (aiConfig.provider === 'built_in' || !aiConfig.apiKey && aiConfig.provider !== 'custom') {
+        if (badge) {
+          badge.textContent = 'Built-in Knowledge';
+          badge.className = 'text-[10px] px-1.5 py-0.2 rounded bg-[#00ed64]/10 text-[#00ed64] border border-[#00ed64]/20 font-medium';
+        }
+        if (pill) pill.textContent = 'Built-in';
+        if (avatar) avatar.textContent = '🤖';
+        if (subtext) subtext.textContent = 'Curated mongosh lessons, query examples, and interactive quizzes';
+      } else if (aiConfig.provider === 'gemini') {
+        if (badge) {
+          badge.textContent = `⚡ Gemini (${aiConfig.model || '1.5-flash'})`;
+          badge.className = 'text-[10px] px-1.5 py-0.2 rounded bg-sky-950/80 text-sky-400 border border-sky-600/40 font-medium';
+        }
+        if (pill) pill.textContent = 'Gemini';
+        if (avatar) avatar.textContent = '✨';
+        if (subtext) subtext.textContent = `Connected to Google Gemini: generating custom queries & explanations`;
+      } else if (aiConfig.provider === 'openai') {
+        if (badge) {
+          badge.textContent = `⚡ OpenAI (${aiConfig.model || 'gpt-4o-mini'})`;
+          badge.className = 'text-[10px] px-1.5 py-0.2 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-600/40 font-medium';
+        }
+        if (pill) pill.textContent = 'OpenAI';
+        if (avatar) avatar.textContent = '🧠';
+        if (subtext) subtext.textContent = `Connected to OpenAI: generating custom queries & explanations`;
+      } else if (aiConfig.provider === 'custom') {
+        if (badge) {
+          badge.textContent = `🦙 Local (${aiConfig.model || 'Ollama'})`;
+          badge.className = 'text-[10px] px-1.5 py-0.2 rounded bg-purple-950/80 text-purple-400 border border-purple-600/40 font-medium';
+        }
+        if (pill) pill.textContent = 'Local LLM';
+        if (avatar) avatar.textContent = '🦙';
+        if (subtext) subtext.textContent = `Connected to Local LLM at ${aiConfig.endpoint}`;
+      }
+    }
+
+    function newObjectId() {
+      const hex = '0123456789abcdef';
+      let id = '';
+      for (let i = 0; i < 24; i++) {
+        id += hex[Math.floor(Math.random() * 16)];
+      }
+      return `ObjectId('${id}')`;
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? 'bg-[#023430] border-[#00ed64] text-[#00ed64]' : 
+                 type === 'error' ? 'bg-[#3b1219] border-[#ef4444] text-[#ef4444]' : 
+                 'bg-[#0b2936] border-[#113240] text-slate-200';
+      toast.className = `${bg} border px-3.5 py-2 rounded-lg text-xs font-medium shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2`;
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // --- MONGOSH QUERY PARSER & SIMULATION ENGINE ---
+    function evaluateMongosh(input) {
+      const raw = input.trim().replace(/;+$/, '');
+      if (!raw) return { type: 'empty' };
+
+      if (commandHistory[commandHistory.length - 1] !== raw) {
+        commandHistory.push(raw);
+      }
+      historyIndex = -1;
+
+      // 1. Navigation / Admin commands
+      if (raw === 'show dbs' || raw === 'show databases') {
+        const dbs = Object.keys(dbState);
+        let out = '';
+        dbs.forEach(d => {
+          const docCount = Object.values(dbState[d]).reduce((sum, arr) => sum + arr.length, 0);
+          const size = (docCount * 0.015 + 0.035).toFixed(3);
+          out += `${d.padEnd(20)} ${size} KiB\n`;
+        });
+        return { type: 'text', output: out.trimEnd() };
+      }
+
+      if (raw.startsWith('use ')) {
+        const target = raw.substring(4).trim();
+        if (!target) return { type: 'error', output: 'MongoServerError: Must specify database name' };
+        currentDb = target;
+        if (!dbState[currentDb]) {
+          dbState[currentDb] = {};
+        }
+        updateDbUI();
+        return { type: 'text', output: `switched to db ${currentDb}` };
+      }
+
+      if (raw === 'show collections' || raw === 'show tables') {
+        if (!dbState[currentDb]) return { type: 'text', output: '' };
+        const cols = Object.keys(dbState[currentDb]);
+        return { type: 'text', output: cols.length > 0 ? cols.join('\n') : '(no collections in database)' };
+      }
+
+      if (raw === 'db') {
+        return { type: 'text', output: currentDb };
+      }
+
+      if (raw === 'cls' || raw === 'clear') {
+        return { type: 'clear' };
+      }
+
+      if (raw === 'help' || raw === 'db.help()') {
+        return {
+          type: 'text',
+          output: `mongosh Quick Help:
+  show dbs                         Print a list of all databases on the server
+  use <db>                         Switch current database to <db>
+  show collections                 Print a list of all collections for current db
+  db.<collection>.find(<query>)    Query documents from a collection
+  db.<collection>.insertOne(<doc>) Insert a single document
+  db.<collection>.updateOne(...)   Update one matching document
+  db.<collection>.deleteOne(...)   Delete one matching document
+  db.<collection>.aggregate([...]) Run aggregation pipeline
+  cls                              Clear terminal screen`
+        };
+      }
+
+      if (raw === 'db.stats()') {
+        const cols = Object.keys(dbState[currentDb] || {}).length;
+        const totalDocs = Object.values(dbState[currentDb] || {}).reduce((sum, arr) => sum + arr.length, 0);
+        return {
+          type: 'json',
+          output: {
+            db: currentDb,
+            collections: cols,
+            views: 0,
+            objects: totalDocs,
+            avgObjSize: 124,
+            dataSize: totalDocs * 124,
+            storageSize: 36864,
+            ok: 1
+          }
+        };
+      }
+
+      if (raw === 'db.dropDatabase()') {
+        const droppedName = currentDb;
+        delete dbState[currentDb];
+        currentDb = 'test';
+        if (!dbState[currentDb]) dbState[currentDb] = {};
+        updateDbUI();
+        return { type: 'json', output: { dropped: droppedName, ok: 1 } };
+      }
+
+      // Check for db.<collection>.<method>(...)
+      const dbColPattern = /^db\.([a-zA-Z0-9_]+)\.(.+)$/;
+      const match = raw.match(dbColPattern);
+      if (match) {
+        const colName = match[1];
+        const rest = match[2];
+        return executeCollectionMethod(colName, rest);
+      }
+
+      // Fallback: Safe JavaScript Expression Evaluation
+      try {
+        const sandbox = {
+          db: currentDb,
+          databases: dbState,
+          Math: Math,
+          Date: Date,
+          JSON: JSON
+        };
+        const fn = new Function('sandbox', `with(sandbox) { return (${raw}); }`);
+        const result = fn(sandbox);
+        if (typeof result === 'object' && result !== null) {
+          return { type: 'json', output: result };
+        }
+        return { type: 'text', output: String(result) };
+      } catch (err) {
+        return { type: 'error', output: `ReferenceError: ${err.message}` };
+      }
+    }
+
+    // Helper: evaluate filter query on an object
+    function matchFilter(doc, filter) {
+      if (!filter || Object.keys(filter).length === 0) return true;
+
+      if (filter.$and && Array.isArray(filter.$and)) {
+        return filter.$and.every(cond => matchFilter(doc, cond));
+      }
+      if (filter.$or && Array.isArray(filter.$or)) {
+        return filter.$or.some(cond => matchFilter(doc, cond));
+      }
+
+      for (const [key, cond] of Object.entries(filter)) {
+        if (key.startsWith('$')) continue;
+        const val = doc[key];
+
+        if (typeof cond === 'object' && cond !== null && !(cond instanceof RegExp)) {
+          for (const [op, opVal] of Object.entries(cond)) {
+            if (op === '$eq' && val !== opVal) return false;
+            if (op === '$ne' && val === opVal) return false;
+            if (op === '$gt' && !(val > opVal)) return false;
+            if (op === '$gte' && !(val >= opVal)) return false;
+            if (op === '$lt' && !(val < opVal)) return false;
+            if (op === '$lte' && !(val <= opVal)) return false;
+            if (op === '$in') {
+              if (Array.isArray(val)) {
+                if (!val.some(v => opVal.includes(v))) return false;
+              } else {
+                if (!opVal.includes(val)) return false;
+              }
+            }
+            if (op === '$nin') {
+              if (Array.isArray(val)) {
+                if (val.some(v => opVal.includes(v))) return false;
+              } else {
+                if (!opVal.includes(val)) return false;
+              }
+            }
+            if (op === '$exists') {
+              const exists = key in doc;
+              if (exists !== Boolean(opVal)) return false;
+            }
+            if (op === '$regex') {
+              const reg = new RegExp(opVal, cond.$options || '');
+              if (!reg.test(String(val))) return false;
+            }
+          }
+        } else if (Array.isArray(val)) {
+          if (!val.includes(cond)) return false;
+        } else {
+          if (val !== cond) return false;
+        }
+      }
+      return true;
+    }
+
+    function applyProjection(doc, projection) {
+      if (!projection || Object.keys(projection).length === 0) {
+        return JSON.parse(JSON.stringify(doc));
+      }
+      const isInclusive = Object.values(projection).some(v => v === 1 || v === true);
+      const res = {};
+      if (isInclusive) {
+        if (projection._id !== 0 && doc._id !== undefined) {
+          res._id = doc._id;
+        }
+        for (const [k, v] of Object.entries(projection)) {
+          if ((v === 1 || v === true) && doc[k] !== undefined) {
+            res[k] = doc[k];
+          }
+        }
+      } else {
+        Object.assign(res, doc);
+        for (const [k, v] of Object.entries(projection)) {
+          if (v === 0 || v === false) {
+            delete res[k];
+          }
+        }
+      }
+      return res;
+    }
+
+    function executeCollectionMethod(colName, callExpr) {
+      if (!dbState[currentDb]) dbState[currentDb] = {};
+      if (!dbState[currentDb][colName]) {
+        dbState[currentDb][colName] = [];
+      }
+
+      const collection = dbState[currentDb][colName];
+
+      try {
+        const parenIdx = callExpr.indexOf('(');
+        if (parenIdx === -1) {
+          return { type: 'error', output: `TypeError: db.${colName}.${callExpr} is not a function` };
+        }
+        const method = callExpr.substring(0, parenIdx).trim();
+
+        if (method === 'drop') {
+          delete dbState[currentDb][colName];
+          updateDbUI();
+          return { type: 'json', output: true };
+        }
+
+        if (method === 'help') {
+          return {
+            type: 'text',
+            output: `Collection methods for db.${colName}:
+  db.${colName}.find(query, projection)
+  db.${colName}.findOne(query, projection)
+  db.${colName}.insertOne(document)
+  db.${colName}.insertMany([documents])
+  db.${colName}.updateOne(filter, update, options)
+  db.${colName}.updateMany(filter, update, options)
+  db.${colName}.deleteOne(filter)
+  db.${colName}.deleteMany(filter)
+  db.${colName}.aggregate(pipeline)
+  db.${colName}.countDocuments(filter)
+  db.${colName}.createIndex(keys, options)
+  db.${colName}.getIndexes()`
+          };
+        }
+
+        if (method === 'getIndexes') {
+          return {
+            type: 'json',
+            output: [
+              { v: 2, key: { _id: 1 }, name: "_id_" }
+            ]
+          };
+        }
+
+        if (method === 'createIndex') {
+          return {
+            type: 'text',
+            output: `idx_${colName}_created`
+          };
+        }
+
+        if (method === 'insertOne') {
+          const argStr = callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')'));
+          const doc = parseJsObject(argStr);
+          if (!doc._id) {
+            doc._id = newObjectId();
+          }
+          collection.push(doc);
+          updateDbUI();
+          checkChallengeSuccess();
+          return {
+            type: 'json',
+            output: {
+              acknowledged: true,
+              insertedId: doc._id
+            }
+          };
+        }
+
+        if (method === 'insertMany') {
+          const argStr = callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')'));
+          const docs = parseJsObject(argStr);
+          if (!Array.isArray(docs)) {
+            return { type: 'error', output: 'MongoInvalidArgumentError: Argument must be an array of documents' };
+          }
+          const insertedIds = {};
+          docs.forEach((d, idx) => {
+            if (!d._id) d._id = newObjectId();
+            insertedIds[String(idx)] = d._id;
+            collection.push(d);
+          });
+          updateDbUI();
+          checkChallengeSuccess();
+          return {
+            type: 'json',
+            output: {
+              acknowledged: true,
+              insertedCount: docs.length,
+              insertedIds: insertedIds
+            }
+          };
+        }
+
+        if (method === 'updateOne' || method === 'updateMany') {
+          const args = parseArguments(callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')')));
+          const filter = args[0] || {};
+          const update = args[1] || {};
+          const options = args[2] || {};
+
+          let matchedCount = 0;
+          let modifiedCount = 0;
+
+          for (let i = 0; i < collection.length; i++) {
+            const doc = collection[i];
+            if (matchFilter(doc, filter)) {
+              matchedCount++;
+              applyUpdateOperators(doc, update);
+              modifiedCount++;
+              if (method === 'updateOne') break;
+            }
+          }
+
+          if (matchedCount === 0 && options.upsert) {
+            const newDoc = { _id: newObjectId(), ...filter };
+            applyUpdateOperators(newDoc, update);
+            collection.push(newDoc);
+            updateDbUI();
+            checkChallengeSuccess();
+            return {
+              type: 'json',
+              output: {
+                acknowledged: true,
+                matchedCount: 0,
+                modifiedCount: 0,
+                upsertedId: newDoc._id
+              }
+            };
+          }
+
+          updateDbUI();
+          checkChallengeSuccess();
+          return {
+            type: 'json',
+            output: {
+              acknowledged: true,
+              matchedCount: matchedCount,
+              modifiedCount: modifiedCount
+            }
+          };
+        }
+
+        if (method === 'deleteOne' || method === 'deleteMany') {
+          const argStr = callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')'));
+          const filter = argStr ? parseJsObject(argStr) : {};
+          let deletedCount = 0;
+
+          for (let i = collection.length - 1; i >= 0; i--) {
+            if (matchFilter(collection[i], filter)) {
+              collection.splice(i, 1);
+              deletedCount++;
+              if (method === 'deleteOne') break;
+            }
+          }
+
+          updateDbUI();
+          checkChallengeSuccess();
+          return {
+            type: 'json',
+            output: {
+              acknowledged: true,
+              deletedCount: deletedCount
+            }
+          };
+        }
+
+        if (method === 'countDocuments') {
+          const argStr = callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')'));
+          const filter = argStr ? parseJsObject(argStr) : {};
+          const count = collection.filter(d => matchFilter(d, filter)).length;
+          checkChallengeSuccess();
+          return { type: 'text', output: String(count) };
+        }
+
+        if (method === 'findOne') {
+          const args = parseArguments(callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')')));
+          const filter = args[0] || {};
+          const projection = args[1] || null;
+          const found = collection.find(d => matchFilter(d, filter));
+          if (!found) return { type: 'text', output: 'null' };
+          checkChallengeSuccess();
+          return { type: 'json', output: applyProjection(found, projection) };
+        }
+
+        if (method === 'aggregate') {
+          const argStr = callExpr.substring(parenIdx + 1, callExpr.lastIndexOf(')'));
+          const pipeline = parseJsObject(argStr);
+          if (!Array.isArray(pipeline)) {
+            return { type: 'error', output: 'MongoInvalidArgumentError: Pipeline must be an array' };
+          }
+          const aggResult = runAggregationPipeline(collection, pipeline);
+          checkChallengeSuccess();
+          return { type: 'json', output: aggResult };
+        }
+
+        if (method === 'find') {
+          return executeFindChain(collection, callExpr);
+        }
+
+        return { type: 'error', output: `TypeError: db.${colName}.${method} is not supported in simulator` };
+      } catch (err) {
+        return { type: 'error', output: `MongoError: ${err.message}` };
+      }
+    }
+
+    function executeFindChain(collection, fullExpr) {
+      const findOpen = fullExpr.indexOf('(');
+      let depth = 0;
+      let findClose = -1;
+      for (let i = findOpen; i < fullExpr.length; i++) {
+        if (fullExpr[i] === '(') depth++;
+        else if (fullExpr[i] === ')') {
+          depth--;
+          if (depth === 0) {
+            findClose = i;
+            break;
+          }
+        }
+      }
+
+      if (findClose === -1) {
+        return { type: 'error', output: 'SyntaxError: Unexpected token or unclosed parenthesis' };
+      }
+
+      const findArgsStr = fullExpr.substring(findOpen + 1, findClose);
+      const args = parseArguments(findArgsStr);
+      const filter = args[0] || {};
+      const projection = args[1] || null;
+
+      let docs = collection.filter(d => matchFilter(d, filter));
+
+      const rest = fullExpr.substring(findClose + 1);
+      if (rest.startsWith('.')) {
+        const chainedCalls = rest.split('.').filter(Boolean);
+        for (const call of chainedCalls) {
+          const m = call.match(/^([a-zA-Z0-9_]+)\((.*)\)$/);
+          if (m) {
+            const chainMethod = m[1];
+            const chainArgStr = m[2];
+
+            if (chainMethod === 'sort') {
+              const sortSpec = parseJsObject(chainArgStr);
+              docs.sort((a, b) => {
+                for (const [key, dir] of Object.entries(sortSpec)) {
+                  if (a[key] < b[key]) return dir === 1 ? -1 : 1;
+                  if (a[key] > b[key]) return dir === 1 ? 1 : -1;
+                }
+                return 0;
+              });
+            } else if (chainMethod === 'limit') {
+              const limitNum = parseInt(chainArgStr, 10);
+              if (!isNaN(limitNum)) docs = docs.slice(0, limitNum);
+            } else if (chainMethod === 'skip') {
+              const skipNum = parseInt(chainArgStr, 10);
+              if (!isNaN(skipNum)) docs = docs.slice(skipNum);
+            } else if (chainMethod === 'count' || chainMethod === 'countDocuments') {
+              return { type: 'text', output: String(docs.length) };
+            }
+          }
+        }
+      }
+
+      const projected = docs.map(d => applyProjection(d, projection));
+      checkChallengeSuccess();
+      return { type: 'json', output: projected };
+    }
+
+    function applyUpdateOperators(doc, update) {
+      if (update.$set) {
+        for (const [k, v] of Object.entries(update.$set)) {
+          doc[k] = v;
+        }
+      }
+      if (update.$unset) {
+        for (const k of Object.keys(update.$unset)) {
+          delete doc[k];
+        }
+      }
+      if (update.$inc) {
+        for (const [k, v] of Object.entries(update.$inc)) {
+          doc[k] = (Number(doc[k]) || 0) + Number(v);
+        }
+      }
+      if (update.$push) {
+        for (const [k, v] of Object.entries(update.$push)) {
+          if (!Array.isArray(doc[k])) doc[k] = [];
+          doc[k].push(v);
+        }
+      }
+      if (update.$pull) {
+        for (const [k, v] of Object.entries(update.$pull)) {
+          if (Array.isArray(doc[k])) {
+            doc[k] = doc[k].filter(item => item !== v);
+          }
+        }
+      }
+      if (!Object.keys(update).some(k => k.startsWith('$'))) {
+        for (const [k, v] of Object.entries(update)) {
+          if (k !== '_id') doc[k] = v;
+        }
+      }
+    }
+
+    function runAggregationPipeline(collection, pipeline) {
+      let current = JSON.parse(JSON.stringify(collection));
+
+      for (const stage of pipeline) {
+        const stageName = Object.keys(stage)[0];
+        const spec = stage[stageName];
+
+        if (stageName === '$match') {
+          current = current.filter(d => matchFilter(d, spec));
+        } else if (stageName === '$group') {
+          const idExpr = spec._id;
+          const groups = {};
+
+          for (const doc of current) {
+            let groupKey;
+            if (idExpr === null) {
+              groupKey = '__all__';
+            } else if (typeof idExpr === 'string' && idExpr.startsWith('$')) {
+              groupKey = doc[idExpr.substring(1)] !== undefined ? doc[idExpr.substring(1)] : 'null';
+            } else {
+              groupKey = idExpr;
+            }
+
+            if (!groups[groupKey]) {
+              groups[groupKey] = {
+                _id: idExpr === null ? null : (typeof idExpr === 'string' && idExpr.startsWith('$') ? doc[idExpr.substring(1)] : idExpr),
+                _items: []
+              };
+            }
+            groups[groupKey]._items.push(doc);
+          }
+
+          const resultGroups = [];
+          for (const g of Object.values(groups)) {
+            const outDoc = { _id: g._id };
+            for (const [accField, accExpr] of Object.entries(spec)) {
+              if (accField === '_id') continue;
+              const accOp = Object.keys(accExpr)[0];
+              const accVal = accExpr[accOp];
+
+              if (accOp === '$sum') {
+                if (typeof accVal === 'number') {
+                  outDoc[accField] = g._items.length * accVal;
+                } else if (typeof accVal === 'string' && accVal.startsWith('$')) {
+                  const field = accVal.substring(1);
+                  outDoc[accField] = g._items.reduce((s, it) => s + (Number(it[field]) || 0), 0);
+                }
+              } else if (accOp === '$avg') {
+                const field = accVal.substring(1);
+                const sum = g._items.reduce((s, it) => s + (Number(it[field]) || 0), 0);
+                outDoc[accField] = g._items.length > 0 ? Number((sum / g._items.length).toFixed(2)) : 0;
+              } else if (accOp === '$min') {
+                const field = accVal.substring(1);
+                const values = g._items.map(it => it[field]).filter(v => v !== undefined);
+                outDoc[accField] = values.length ? Math.min(...values) : null;
+              } else if (accOp === '$max') {
+                const field = accVal.substring(1);
+                const values = g._items.map(it => it[field]).filter(v => v !== undefined);
+                outDoc[accField] = values.length ? Math.max(...values) : null;
+              } else if (accOp === '$push') {
+                const field = accVal.substring(1);
+                outDoc[accField] = g._items.map(it => it[field]);
+              }
+            }
+            resultGroups.push(outDoc);
+          }
+          current = resultGroups;
+        } else if (stageName === '$sort') {
+          current.sort((a, b) => {
+            for (const [key, dir] of Object.entries(spec)) {
+              if (a[key] < b[key]) return dir === 1 ? -1 : 1;
+              if (a[key] > b[key]) return dir === 1 ? 1 : -1;
+            }
+            return 0;
+          });
+        } else if (stageName === '$limit') {
+          current = current.slice(0, Number(spec));
+        } else if (stageName === '$skip') {
+          current = current.slice(Number(spec));
+        } else if (stageName === '$count') {
+          current = [{ [spec]: current.length }];
+        } else if (stageName === '$project') {
+          current = current.map(d => applyProjection(d, spec));
+        }
+      }
+      return current;
+    }
+
+    function parseJsObject(str) {
+      if (!str || !str.trim()) return {};
+      try {
+        const fn = new Function(`return (${str});`);
+        return fn();
+      } catch (e) {
+        throw new Error(`Failed to parse expression: ${str}`);
+      }
+    }
+
+    function parseArguments(str) {
+      if (!str || !str.trim()) return [];
+      try {
+        const fn = new Function(`return [${str}];`);
+        return fn();
+      } catch (e) {
+        return [str.trim()];
+      }
+    }
+
+    // --- TERMINAL UI & RENDERING ---
+    const termOutput = document.getElementById('terminalOutput');
+    const termInput = document.getElementById('termInput');
+    const promptPrefix = document.getElementById('promptPrefix');
+    const termDbLabel = document.getElementById('termDbLabel');
+
+    function initTerminal() {
+      if (!termOutput) return;
+      termOutput.innerHTML = `
+        <div class="text-slate-400 space-y-1 pb-2 border-b border-[#113240]/60">
+          <div><span class="text-[#00ed64] font-bold">Current Mongosh Log ID:</span> 672a9b3d098e721a4f000001</div>
+          <div><span class="text-slate-300">Connecting to:</span> <span class="text-[#00ed64]">mongodb://127.0.0.1:27017/?directConnection=true&appName=mongosh+2.3.8</span></div>
+          <div><span class="text-slate-300">Using MongoDB:</span> 7.0.14</div>
+          <div><span class="text-slate-300">Using Mongosh:</span> 2.3.8</div>
+          <div class="text-slate-500 pt-1">For mongosh info, visit: <span class="text-sky-400 underline">https://www.mongodb.com/docs/mongodb-shell/</span></div>
+          <div class="text-amber-400/90 text-[11px] pt-1">⚠️ [Sandbox Mode] Simulated MongoDB v7.0 instance with sample datasets ('shop', 'sample_university', 'analytics').</div>
+        </div>
+      `;
+      updatePrompt();
+    }
+
+    function updatePrompt() {
+      if (promptPrefix) promptPrefix.textContent = `${currentDb}>`;
+      if (termDbLabel) termDbLabel.textContent = currentDb;
+    }
+
+    function colorizeJson(obj) {
+      const jsonStr = JSON.stringify(obj, null, 2);
+      return jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            return `<span class="syntax-key">${match.slice(0, -1)}</span>:`;
+          } else {
+            if (match.includes("ObjectId('")) {
+              return `<span class="syntax-id">${match}</span>`;
+            }
+            return `<span class="syntax-string">${match}</span>`;
+          }
+        } else if (/true|false/.test(match)) {
+          return `<span class="syntax-boolean">${match}</span>`;
+        } else if (/null/.test(match)) {
+          return `<span class="syntax-null">${match}</span>`;
+        }
+        return `<span class="syntax-number">${match}</span>`;
+      });
+    }
+
+    function runCommand(cmdText) {
+      const trimmed = cmdText.trim();
+      if (!trimmed || !termOutput) return;
+
+      const cmdRow = document.createElement('div');
+      cmdRow.className = 'pt-2';
+      cmdRow.innerHTML = `<span class="text-[#00ed64] font-bold">${currentDb}&gt;</span> <span class="text-white font-medium">${escapeHtml(trimmed)}</span>`;
+      termOutput.appendChild(cmdRow);
+
+      const res = evaluateMongosh(trimmed);
+
+      if (res.type === 'clear') {
+        termOutput.innerHTML = '';
+      } else if (res.type === 'error') {
+        const errRow = document.createElement('div');
+        errRow.className = 'text-rose-400 py-1 pl-2 border-l-2 border-rose-500 bg-rose-950/20';
+        errRow.innerHTML = `
+          <div>${escapeHtml(res.output)}</div>
+          <div class="mt-1">
+            <button class="btn-ask-ai-error text-[11px] text-sky-400 hover:text-sky-300 underline flex items-center gap-1 font-sans" data-cmd="${escapeHtml(trimmed)}" data-err="${escapeHtml(res.output)}">
+              <span>🤖</span> Ask MongoBot to diagnose and fix this error
+            </button>
+          </div>
+        `;
+        termOutput.appendChild(errRow);
+
+        // Bind error diagnose button
+        errRow.querySelector('.btn-ask-ai-error').addEventListener('click', (e) => {
+          const c = e.currentTarget.dataset.cmd;
+          const er = e.currentTarget.dataset.err;
+          const query = `Explain this mongosh error and how to fix it:\nCommand: ${c}\nError: ${er}`;
+          if (chatInput) {
+            chatInput.value = query;
+            chatForm.dispatchEvent(new Event('submit'));
+          }
+        });
+      } else if (res.type === 'text') {
+        const textRow = document.createElement('pre');
+        textRow.className = 'text-slate-300 py-0.5 whitespace-pre-wrap';
+        textRow.textContent = res.output;
+        termOutput.appendChild(textRow);
+      } else if (res.type === 'json') {
+        const jsonRow = document.createElement('pre');
+        jsonRow.className = 'text-xs sm:text-[13px] py-1 whitespace-pre-wrap';
+        jsonRow.innerHTML = colorizeJson(res.output);
+        termOutput.appendChild(jsonRow);
+      }
+
+      termOutput.scrollTop = termOutput.scrollHeight;
+      updatePrompt();
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // --- TERMINAL EVENT LISTENERS ---
+    if (termInput) {
+      termInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const cmd = termInput.value;
+          termInput.value = '';
+          runCommand(cmd);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (commandHistory.length > 0) {
+            if (historyIndex === -1) historyIndex = commandHistory.length - 1;
+            else if (historyIndex > 0) historyIndex--;
+            termInput.value = commandHistory[historyIndex] || '';
+          }
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (historyIndex !== -1) {
+            if (historyIndex < commandHistory.length - 1) {
+              historyIndex++;
+              termInput.value = commandHistory[historyIndex] || '';
+            } else {
+              historyIndex = -1;
+              termInput.value = '';
+            }
+          }
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          handleTabAutocomplete();
+        }
+      });
+    }
+
+    const btnRunTerm = document.getElementById('btnRunTerm');
+    if (btnRunTerm) {
+      btnRunTerm.addEventListener('click', () => {
+        const cmd = termInput.value;
+        termInput.value = '';
+        runCommand(cmd);
+        termInput.focus();
+      });
+    }
+
+    const btnClearTerm = document.getElementById('btnClearTerm');
+    if (btnClearTerm) {
+      btnClearTerm.addEventListener('click', () => {
+        termOutput.innerHTML = '';
+        showToast('Terminal output cleared', 'info');
+      });
+    }
+
+    const btnSampleFind = document.getElementById('btnSampleFind');
+    if (btnSampleFind) {
+      btnSampleFind.addEventListener('click', () => {
+        termInput.value = `db.products.find({ price: { $gt: 50 } }, { name: 1, price: 1, rating: 1 })`;
+        termInput.focus();
+      });
+    }
+
+    const btnSampleAgg = document.getElementById('btnSampleAgg');
+    if (btnSampleAgg) {
+      btnSampleAgg.addEventListener('click', () => {
+        termInput.value = `db.products.aggregate([{ $group: { _id: "$category", count: { $sum: 1 }, avgPrice: { $avg: "$price" } } }, { $sort: { avgPrice: -1 } }])`;
+        termInput.focus();
+      });
+    }
+
+    function handleTabAutocomplete() {
+      if (!termInput) return;
+      const val = termInput.value;
+      const suggestions = [
+        'show dbs', 'show collections', 'db.products.find()', 'db.products.aggregate([])',
+        'db.customers.find()', 'db.orders.find()', 'cls', 'help'
+      ];
+      const match = suggestions.find(s => s.startsWith(val));
+      if (match) {
+        termInput.value = match;
+      }
+    }
+
+    // --- EXPLORER UI ---
+    let activeExplorerCol = 'products';
+
+    function updateDbUI() {
+      const headerSelect = document.getElementById('headerDbSelect');
+      if (headerSelect && headerSelect.options) {
+        const opts = Array.from(headerSelect.options);
+        if (!opts.some(o => o.value === currentDb)) {
+          const opt = document.createElement('option');
+          opt.value = currentDb;
+          opt.textContent = currentDb;
+          opt.className = 'bg-[#0b2936] text-white';
+          headerSelect.appendChild(opt);
+        }
+        headerSelect.value = currentDb;
+      }
+
+      const explorerSelect = document.getElementById('explorerDbSelect');
+      if (explorerSelect && explorerSelect.options) {
+        const opts = Array.from(explorerSelect.options);
+        if (!opts.some(o => o.value === currentDb)) {
+          const opt = document.createElement('option');
+          opt.value = currentDb;
+          opt.textContent = currentDb;
+          explorerSelect.appendChild(opt);
+        }
+        explorerSelect.value = currentDb;
+      }
+
+      updatePrompt();
+      renderExplorer();
+    }
+
+    function renderExplorer() {
+      const colsList = document.getElementById('explorerCollectionsList');
+      const docsContainer = document.getElementById('explorerDocsContainer');
+      const badge = document.getElementById('collectionCountBadge');
+      if (!colsList || !docsContainer) return;
+
+      const curDbData = dbState[currentDb] || {};
+      const colNames = Object.keys(curDbData);
+
+      if (badge) badge.textContent = colNames.length;
+
+      if (!colNames.includes(activeExplorerCol)) {
+        activeExplorerCol = colNames[0] || '';
+      }
+
+      colsList.innerHTML = '';
+      if (colNames.length === 0) {
+        colsList.innerHTML = '<div class="text-slate-500 py-3 text-center">No collections yet.<br>Run an insert to create one!</div>';
+      } else {
+        colNames.forEach(cName => {
+          const count = curDbData[cName].length;
+          const isActive = cName === activeExplorerCol;
+          const item = document.createElement('button');
+          item.className = `w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between transition ${isActive ? 'bg-[#00ed64]/20 text-[#00ed64] font-bold border border-[#00ed64]/40' : 'text-slate-300 hover:bg-[#113240]'}`;
+          item.innerHTML = `
+            <span class="flex items-center gap-1.5 truncate">
+              <span>📄</span>
+              <span>${cName}</span>
+            </span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded bg-[#001e2b] text-slate-400">${count}</span>
+          `;
+          item.onclick = () => {
+            activeExplorerCol = cName;
+            renderExplorer();
+          };
+          colsList.appendChild(item);
+        });
+      }
+
+      const colLabel = document.getElementById('activeCollectionLabel');
+      const modalCol = document.getElementById('modalColName');
+      const docBadge = document.getElementById('docCountBadge');
+
+      if (colLabel) colLabel.textContent = activeExplorerCol || '(none)';
+      if (modalCol) modalCol.textContent = activeExplorerCol || 'products';
+
+      if (!activeExplorerCol || !curDbData[activeExplorerCol]) {
+        if (docBadge) docBadge.textContent = '0 docs';
+        docsContainer.innerHTML = '<div class="text-slate-500 py-6 text-center">Select or create a collection to inspect documents</div>';
+        return;
+      }
+
+      const docs = curDbData[activeExplorerCol];
+      if (docBadge) docBadge.textContent = `${docs.length} docs`;
+
+      const searchInput = document.getElementById('explorerDocSearch');
+      const searchFilter = (searchInput && typeof searchInput.value === 'string') ? searchInput.value.toLowerCase().trim() : '';
+      const filteredDocs = searchFilter 
+        ? docs.filter(d => JSON.stringify(d).toLowerCase().includes(searchFilter))
+        : docs;
+
+      docsContainer.innerHTML = '';
+      if (filteredDocs.length === 0) {
+        docsContainer.innerHTML = '<div class="text-slate-500 py-6 text-center">No documents match the filter</div>';
+        return;
+      }
+
+      filteredDocs.forEach((doc, idx) => {
+        const card = document.createElement('div');
+        card.className = 'p-2.5 rounded bg-[#001e2b] border border-[#113240] hover:border-slate-700 transition space-y-1';
+        
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-[11px] pb-1 border-b border-[#113240]/40">
+            <span class="text-slate-400 font-semibold">Doc #${idx + 1}</span>
+            <span class="text-slate-500 text-[10px]">${doc._id || ''}</span>
+          </div>
+          <pre class="overflow-x-auto text-xs py-1 leading-snug">${colorizeJson(doc)}</pre>
+        `;
+        docsContainer.appendChild(card);
+      });
+    }
+
+    const headerDbSelect = document.getElementById('headerDbSelect');
+    if (headerDbSelect) {
+      headerDbSelect.addEventListener('change', (e) => {
+        currentDb = e.target.value;
+        updateDbUI();
+        showToast(`Switched to database: ${currentDb}`, 'info');
+      });
+    }
+
+    const explorerDbSelect = document.getElementById('explorerDbSelect');
+    if (explorerDbSelect) {
+      explorerDbSelect.addEventListener('change', (e) => {
+        currentDb = e.target.value;
+        updateDbUI();
+        showToast(`Switched to database: ${currentDb}`, 'info');
+      });
+    }
+
+    const explorerDocSearch = document.getElementById('explorerDocSearch');
+    if (explorerDocSearch) {
+      explorerDocSearch.addEventListener('input', () => {
+        renderExplorer();
+      });
+    }
+
+    const btnRefreshExplorer = document.getElementById('btnRefreshExplorer');
+    if (btnRefreshExplorer) {
+      btnRefreshExplorer.addEventListener('click', () => {
+        renderExplorer();
+        showToast('Database explorer refreshed', 'info');
+      });
+    }
+
+    const btnResetDb = document.getElementById('btnResetDb');
+    if (btnResetDb) {
+      btnResetDb.addEventListener('click', () => {
+        dbState = JSON.parse(JSON.stringify(INITIAL_DATABASES));
+        currentDb = 'shop';
+        updateDbUI();
+        initTerminal();
+        showToast('Databases restored to sample data', 'success');
+      });
+    }
+
+    // --- MODAL: INSERT DOCUMENT ---
+    const insertModal = document.getElementById('insertDocModal');
+    const btnAddDocModalBtn = document.getElementById('btnAddDocModalBtn');
+    if (btnAddDocModalBtn && insertModal) {
+      btnAddDocModalBtn.addEventListener('click', () => {
+        insertModal.classList.remove('hidden');
+      });
+    }
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    if (btnCloseModal && insertModal) {
+      btnCloseModal.addEventListener('click', () => {
+        insertModal.classList.add('hidden');
+      });
+    }
+    const btnCancelModal = document.getElementById('btnCancelModal');
+    if (btnCancelModal && insertModal) {
+      btnCancelModal.addEventListener('click', () => {
+        insertModal.classList.add('hidden');
+      });
+    }
+    const btnConfirmInsertDoc = document.getElementById('btnConfirmInsertDoc');
+    if (btnConfirmInsertDoc && insertModal) {
+      btnConfirmInsertDoc.addEventListener('click', () => {
+        const rawJson = document.getElementById('modalDocJson').value;
+        try {
+          const doc = parseJsObject(rawJson);
+          if (!doc._id) doc._id = newObjectId();
+          if (!dbState[currentDb]) dbState[currentDb] = {};
+          if (!dbState[currentDb][activeExplorerCol]) dbState[currentDb][activeExplorerCol] = [];
+          dbState[currentDb][activeExplorerCol].push(doc);
+          insertModal.classList.add('hidden');
+          renderExplorer();
+          checkChallengeSuccess();
+          showToast(`Document inserted into ${activeExplorerCol}`, 'success');
+        } catch (e) {
+          showToast('Invalid JSON: ' + e.message, 'error');
+        }
+      });
+    }
+
+    // --- MODAL: AI PROVIDER SETTINGS (BYOK) ---
+    const aiModal = document.getElementById('aiSettingsModal');
+    const btnTopAiConfig = document.getElementById('btnTopAiConfig');
+    const btnChatAiConfig = document.getElementById('btnChatAiConfig');
+    const btnCloseAiModal = document.getElementById('btnCloseAiModal');
+    const aiProviderSelect = document.getElementById('aiProviderSelect');
+    const aiApiKeyGroup = document.getElementById('aiApiKeyGroup');
+    const aiApiKeyInput = document.getElementById('aiApiKeyInput');
+    const aiModelGroup = document.getElementById('aiModelGroup');
+    const aiModelInput = document.getElementById('aiModelInput');
+    const aiEndpointGroup = document.getElementById('aiEndpointGroup');
+    const aiEndpointInput = document.getElementById('aiEndpointInput');
+    const aiTempGroup = document.getElementById('aiTempGroup');
+    const aiTempSlider = document.getElementById('aiTempSlider');
+    const aiTempVal = document.getElementById('aiTempVal');
+    const aiKeyGetLink = document.getElementById('aiKeyGetLink');
+    const btnToggleKeyVisibility = document.getElementById('btnToggleKeyVisibility');
+    const btnTestAiConnection = document.getElementById('btnTestAiConnection');
+    const btnSaveAiSettings = document.getElementById('btnSaveAiSettings');
+    const btnClearAiConfig = document.getElementById('btnClearAiConfig');
+    const aiTestResultBox = document.getElementById('aiTestResultBox');
+
+    function openAiModal() {
+      if (!aiModal) return;
+      aiProviderSelect.value = aiConfig.provider;
+      aiApiKeyInput.value = aiConfig.apiKey || '';
+      aiModelInput.value = aiConfig.model || '';
+      aiEndpointInput.value = aiConfig.endpoint || '';
+      aiTempSlider.value = aiConfig.temperature || 0.2;
+      aiTempVal.textContent = aiConfig.temperature || 0.2;
+      if (aiTestResultBox) {
+        aiTestResultBox.className = 'hidden';
+        aiTestResultBox.textContent = '';
+      }
+      refreshAiFormFields();
+      aiModal.classList.remove('hidden');
+    }
+
+    function closeAiModal() {
+      if (aiModal) aiModal.classList.add('hidden');
+    }
+
+    if (btnTopAiConfig) btnTopAiConfig.addEventListener('click', openAiModal);
+    if (btnChatAiConfig) btnChatAiConfig.addEventListener('click', openAiModal);
+    if (btnCloseAiModal) btnCloseAiModal.addEventListener('click', closeAiModal);
+
+    function refreshAiFormFields() {
+      const p = aiProviderSelect.value;
+      if (p === 'built_in') {
+        aiApiKeyGroup.classList.add('hidden');
+        aiModelGroup.classList.add('hidden');
+        aiEndpointGroup.classList.add('hidden');
+        aiTempGroup.classList.add('hidden');
+      } else if (p === 'gemini') {
+        aiApiKeyGroup.classList.remove('hidden');
+        aiModelGroup.classList.remove('hidden');
+        aiEndpointGroup.classList.add('hidden');
+        aiTempGroup.classList.remove('hidden');
+        aiKeyGetLink.href = 'https://aistudio.google.com/app/apikey';
+        aiKeyGetLink.textContent = 'Get Gemini Key ↗';
+        if (!aiModelInput.value || aiModelInput.value.startsWith('gpt') || aiModelInput.value.startsWith('llama')) {
+          aiModelInput.value = 'gemini-1.5-flash';
+        }
+      } else if (p === 'openai') {
+        aiApiKeyGroup.classList.remove('hidden');
+        aiModelGroup.classList.remove('hidden');
+        aiEndpointGroup.classList.add('hidden');
+        aiTempGroup.classList.remove('hidden');
+        aiKeyGetLink.href = 'https://platform.openai.com/api-keys';
+        aiKeyGetLink.textContent = 'Get OpenAI Key ↗';
+        if (!aiModelInput.value || aiModelInput.value.startsWith('gemini') || aiModelInput.value.startsWith('llama')) {
+          aiModelInput.value = 'gpt-4o-mini';
+        }
+      } else if (p === 'custom') {
+        aiApiKeyGroup.classList.remove('hidden');
+        aiModelGroup.classList.remove('hidden');
+        aiEndpointGroup.classList.remove('hidden');
+        aiTempGroup.classList.remove('hidden');
+        aiKeyGetLink.href = 'https://ollama.com/';
+        aiKeyGetLink.textContent = 'Ollama Setup Guide ↗';
+        if (!aiModelInput.value || aiModelInput.value.startsWith('gemini') || aiModelInput.value.startsWith('gpt')) {
+          aiModelInput.value = 'llama3.1';
+        }
+      }
+    }
+
+    if (aiProviderSelect) {
+      aiProviderSelect.addEventListener('change', refreshAiFormFields);
+    }
+
+    if (aiTempSlider) {
+      aiTempSlider.addEventListener('input', (e) => {
+        aiTempVal.textContent = e.target.value;
+      });
+    }
+
+    if (btnToggleKeyVisibility) {
+      btnToggleKeyVisibility.addEventListener('click', () => {
+        if (aiApiKeyInput.type === 'password') {
+          aiApiKeyInput.type = 'text';
+          btnToggleKeyVisibility.textContent = '🔒';
+        } else {
+          aiApiKeyInput.type = 'password';
+          btnToggleKeyVisibility.textContent = '👁️';
+        }
+      });
+    }
+
+    // Save AI Config
+    if (btnSaveAiSettings) {
+      btnSaveAiSettings.addEventListener('click', () => {
+        aiConfig.provider = aiProviderSelect.value;
+        aiConfig.apiKey = aiApiKeyInput.value.trim();
+        aiConfig.model = aiModelInput.value.trim();
+        aiConfig.endpoint = aiEndpointInput.value.trim();
+        aiConfig.temperature = parseFloat(aiTempSlider.value) || 0.2;
+        saveAiConfig();
+        closeAiModal();
+        showToast(`AI Provider set to: ${aiConfig.provider.toUpperCase()}`, 'success');
+      });
+    }
+
+    // Clear / Revert to Built-in
+    if (btnClearAiConfig) {
+      btnClearAiConfig.addEventListener('click', () => {
+        aiConfig = {
+          provider: 'built_in',
+          apiKey: '',
+          model: 'gemini-1.5-flash',
+          endpoint: 'http://localhost:11434/v1/chat/completions',
+          temperature: 0.2
+        };
+        saveAiConfig();
+        closeAiModal();
+        showToast('Reverted to Built-in Offline Knowledge Base', 'info');
+      });
+    }
+
+    // Test Connection
+    if (btnTestAiConnection) {
+      btnTestAiConnection.addEventListener('click', async () => {
+        const prov = aiProviderSelect.value;
+        const key = aiApiKeyInput.value.trim();
+        const model = aiModelInput.value.trim();
+        const endpoint = aiEndpointInput.value.trim();
+
+        if (prov === 'built_in') {
+          aiTestResultBox.className = 'p-2.5 rounded bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 text-xs';
+          aiTestResultBox.textContent = '✓ Built-in offline knowledge engine is active and ready.';
+          return;
+        }
+
+        if (prov !== 'custom' && !key) {
+          aiTestResultBox.className = 'p-2.5 rounded bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs';
+          aiTestResultBox.textContent = '✕ Please provide an API key to test the connection.';
+          return;
+        }
+
+        aiTestResultBox.className = 'p-2.5 rounded bg-[#113240] text-slate-300 text-xs animate-pulse';
+        aiTestResultBox.textContent = '⏳ Testing connection to AI endpoint...';
+
+        const startTime = Date.now();
+        try {
+          const testPrompt = 'Respond with exactly: {"status":"mongosh_ready"}';
+          const reply = await executeLlmCall(prov, key, model, endpoint, testPrompt);
+          const duration = Date.now() - startTime;
+          aiTestResultBox.className = 'p-2.5 rounded bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs space-y-1';
+          aiTestResultBox.innerHTML = `<div>✓ <strong>Connection Successful!</strong> (${duration}ms)</div><div class="text-[11px] text-slate-300 font-mono-code truncate">Response: ${escapeHtml(reply.slice(0, 100))}</div>`;
+        } catch (err) {
+          aiTestResultBox.className = 'p-2.5 rounded bg-rose-950/70 border border-rose-500/50 text-rose-300 text-xs space-y-1';
+          aiTestResultBox.innerHTML = `<div>✕ <strong>Connection Failed:</strong></div><div class="text-[11px] font-mono-code">${escapeHtml(err.message)}</div>`;
+        }
+      });
+    }
+
+    // --- TAB SWITCHING LOGIC ---
+    const tabBtns = {
+      terminal: document.getElementById('tabBtnTerminal'),
+      explorer: document.getElementById('tabBtnExplorer'),
+      challenges: document.getElementById('tabBtnChallenges'),
+      cheatsheet: document.getElementById('tabBtnCheatsheet')
+    };
+
+    const panels = {
+      terminal: document.getElementById('panelTerminal'),
+      explorer: document.getElementById('panelExplorer'),
+      challenges: document.getElementById('panelChallenges'),
+      cheatsheet: document.getElementById('panelCheatsheet')
+    };
+
+    function switchTab(tabKey) {
+      Object.keys(panels).forEach(k => {
+        if (!panels[k] || !tabBtns[k]) return;
+        if (k === tabKey) {
+          panels[k].classList.remove('hidden');
+          tabBtns[k].className = 'tab-btn px-3.5 py-2 rounded-t-lg font-mono-code text-xs font-semibold flex items-center gap-2 border-t-2 border-[#00ed64] bg-[#001e2b] text-white';
+        } else {
+          panels[k].classList.add('hidden');
+          tabBtns[k].className = 'tab-btn px-3.5 py-2 rounded-t-lg font-mono-code text-xs font-medium flex items-center gap-2 border-t-2 border-transparent text-slate-400 hover:text-white hover:bg-[#001e2b]/40';
+        }
+      });
+      if (tabKey === 'explorer') renderExplorer();
+      if (tabKey === 'terminal' && termInput) termInput.focus();
+    }
+
+    if (tabBtns.terminal) tabBtns.terminal.addEventListener('click', () => switchTab('terminal'));
+    if (tabBtns.explorer) tabBtns.explorer.addEventListener('click', () => switchTab('explorer'));
+    if (tabBtns.challenges) tabBtns.challenges.addEventListener('click', () => switchTab('challenges'));
+    if (tabBtns.cheatsheet) tabBtns.cheatsheet.addEventListener('click', () => switchTab('cheatsheet'));
+
+    // --- INTERACTIVE CHALLENGES DATA & LOGIC ---
+    const CHALLENGES = [
+      {
+        id: 1,
+        title: "Level 1: Explore & Count Products",
+        difficulty: "Beginner",
+        desc: "Switch to the 'shop' database and count the total number of documents in the 'products' collection.",
+        sampleCmd: "db.products.countDocuments()",
+        hint: "Use db.products.countDocuments() or db.products.find().count()",
+        verify: () => {
+          return dbState.shop && dbState.shop.products && dbState.shop.products.length >= 5;
+        }
+      },
+      {
+        id: 2,
+        title: "Level 2: Filtering with Price & Category",
+        difficulty: "Beginner",
+        desc: "Find all products in 'Electronics' with a price strictly less than $100.",
+        sampleCmd: 'db.products.find({ category: "Electronics", price: { $lt: 100 } })',
+        hint: 'Filter on category: "Electronics" and price: { $lt: 100 }',
+        verify: () => {
+          const prods = (dbState.shop && dbState.shop.products) || [];
+          const matches = prods.filter(p => p.category === 'Electronics' && p.price < 100);
+          return matches.length >= 2;
+        }
+      },
+      {
+        id: 3,
+        title: "Level 3: Projections & Exclusion",
+        difficulty: "Intermediate",
+        desc: "Query the 'customers' collection for 'Gold' or 'Platinum' members, projecting only 'name' and 'city' (exclude '_id').",
+        sampleCmd: 'db.customers.find({ membership: { $in: ["Gold", "Platinum"] } }, { name: 1, city: 1, _id: 0 })',
+        hint: 'Use $in operator for membership, and pass projection { name: 1, city: 1, _id: 0 }',
+        verify: () => {
+          const custs = (dbState.shop && dbState.shop.customers) || [];
+          return custs.some(c => c.membership === 'Gold' || c.membership === 'Platinum');
+        }
+      },
+      {
+        id: 4,
+        title: "Level 4: Atomic Update with $inc & $push",
+        difficulty: "Intermediate",
+        desc: "Update 'Ergonomic Vertical Mouse' in 'products': increase its stock by 10 using $inc and push 'featured' into tags using $push.",
+        sampleCmd: 'db.products.updateOne({ name: "Ergonomic Vertical Mouse" }, { $inc: { stock: 10 }, $push: { tags: "featured" } })',
+        hint: 'Use db.products.updateOne({ name: "Ergonomic Vertical Mouse" }, { $inc: { stock: 10 }, $push: { tags: "featured" } })',
+        verify: () => {
+          const prods = (dbState.shop && dbState.shop.products) || [];
+          const mouse = prods.find(p => p.name === 'Ergonomic Vertical Mouse');
+          return mouse && mouse.stock >= 130 && Array.isArray(mouse.tags) && mouse.tags.includes('featured');
+        }
+      },
+      {
+        id: 5,
+        title: "Level 5: Insert a Document",
+        difficulty: "Beginner",
+        desc: "Insert a new product into the 'products' collection with name 'Ultra HD Webcam', price 79.99, and category 'Electronics'.",
+        sampleCmd: 'db.products.insertOne({ name: "Ultra HD Webcam", price: 79.99, category: "Electronics", stock: 25 })',
+        hint: 'Use db.products.insertOne({ ... }) with the specified fields.',
+        verify: () => {
+          const prods = (dbState.shop && dbState.shop.products) || [];
+          return prods.some(p => p.name === 'Ultra HD Webcam' || p.name.includes('Webcam'));
+        }
+      },
+      {
+        id: 6,
+        title: "Level 6: Aggregation Mastery ($group & $avg)",
+        difficulty: "Advanced",
+        desc: "Run an aggregation pipeline on 'products' that groups by '$category', calculates total count and average price, and sorts descending by average price.",
+        sampleCmd: 'db.products.aggregate([{ $group: { _id: "$category", count: { $sum: 1 }, avgPrice: { $avg: "$price" } } }, { $sort: { avgPrice: -1 } }])',
+        hint: 'Stages: { $group: { _id: "$category", count: { $sum: 1 }, avgPrice: { $avg: "$price" } } } followed by { $sort: { avgPrice: -1 } }',
+        verify: () => {
+          return true;
+        }
+      }
+    ];
+
+    function renderChallenges() {
+      const container = document.getElementById('challengesList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      CHALLENGES.forEach(ch => {
+        const isDone = completedChallenges.has(ch.id);
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-xl border transition ${isDone ? 'bg-[#023430]/70 border-[#00ed64]/60' : 'bg-[#0b2936] border-[#113240]'}`;
+
+        const diffColor = ch.difficulty === 'Beginner' ? 'text-sky-400 bg-sky-950/40 border-sky-800/50' : 
+                          ch.difficulty === 'Intermediate' ? 'text-amber-400 bg-amber-950/40 border-amber-800/50' : 
+                          'text-purple-400 bg-purple-950/40 border-purple-800/50';
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white">${ch.title}</span>
+                <span class="text-[10px] px-2 py-0.2 rounded-full border ${diffColor} font-semibold">${ch.difficulty}</span>
+                ${isDone ? '<span class="text-xs px-2 py-0.2 rounded bg-[#00ed64] text-[#001e2b] font-bold">✓ PASSED</span>' : ''}
+              </div>
+              <p class="text-xs text-slate-300 mt-1">${ch.desc}</p>
+            </div>
+            <div>
+              <button class="btn-verify-ch px-3 py-1 rounded text-xs font-semibold transition ${isDone ? 'bg-[#113240] text-slate-400' : 'bg-[#00ed64] hover:bg-[#00c853] text-[#001e2b]'}" data-id="${ch.id}">
+                ${isDone ? 'Re-verify' : 'Verify'}
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-[#113240]/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="font-mono-code text-[11px] text-slate-400 flex items-center gap-1.5 truncate max-w-md">
+              <span class="text-[#00ed64]">Hint:</span>
+              <span class="truncate">${escapeHtml(ch.sampleCmd)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn-copy-ch text-[11px] text-slate-300 hover:text-white px-2 py-0.8 rounded bg-[#113240] hover:bg-[#1a4457] transition" data-cmd="${escapeHtml(ch.sampleCmd)}">
+                Copy
+              </button>
+              <button class="btn-run-ch text-[11px] text-[#00ed64] hover:text-white px-2.5 py-0.8 rounded bg-[#00684a] hover:bg-[#00ed64] hover:text-[#001e2b] font-semibold transition" data-cmd="${escapeHtml(ch.sampleCmd)}">
+                ▶ Run in Shell
+              </button>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      document.querySelectorAll('.btn-verify-ch').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.target.dataset.id, 10);
+          const ch = CHALLENGES.find(c => c.id === id);
+          if (ch) {
+            if (ch.verify()) {
+              completedChallenges.add(id);
+              showToast(`Challenge passed: ${ch.title}! 🏆`, 'success');
+              updateProgressBadge();
+              renderChallenges();
+            } else {
+              showToast(`Challenge criteria not met yet. Try running the suggested hint in the terminal!`, 'error');
+            }
+          }
+        });
+      });
+
+      document.querySelectorAll('.btn-copy-ch').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cmd = e.target.dataset.cmd;
+          copyToClipboard(cmd);
+          showToast('Command copied to clipboard!', 'info');
+        });
+      });
+
+      document.querySelectorAll('.btn-run-ch').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cmd = e.target.dataset.cmd;
+          switchTab('terminal');
+          if (termInput) {
+            termInput.value = cmd;
+            runCommand(cmd);
+            termInput.value = '';
+          }
+          showToast('Executed in terminal!', 'info');
+        });
+      });
+    }
+
+    function checkChallengeSuccess() {
+      CHALLENGES.forEach(ch => {
+        if (!completedChallenges.has(ch.id) && ch.verify()) {
+        }
+      });
+      updateProgressBadge();
+    }
+
+    function updateProgressBadge() {
+      const count = completedChallenges.size;
+      const text = `${count} / ${CHALLENGES.length}`;
+      const badgeText = document.getElementById('challengeProgressText');
+      const sumText = document.getElementById('challengeSummaryText');
+      const pBar = document.getElementById('challengeProgressBar');
+      if (badgeText) badgeText.textContent = text;
+      if (sumText) sumText.textContent = `${count} of ${CHALLENGES.length} Completed`;
+      if (pBar) pBar.style.width = `${(count / CHALLENGES.length) * 100}%`;
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } catch (e) {}
+      ta.remove();
+    }
+
+    // --- CHEATSHEET DATA & RENDERING ---
+    const CHEATSHEET_CATEGORIES = [
+      {
+        title: "Navigation & Administration",
+        items: [
+          { cmd: "show dbs", desc: "List all databases on the MongoDB instance" },
+          { cmd: "use shop", desc: "Switch to target database (creates if doesn't exist)" },
+          { cmd: "show collections", desc: "List all collections in active database" },
+          { cmd: "db.stats()", desc: "Show storage, collection and document metrics" },
+          { cmd: "cls", desc: "Clear terminal buffer in mongosh" }
+        ]
+      },
+      {
+        title: "CRUD: Read Queries (find)",
+        items: [
+          { cmd: "db.products.find()", desc: "Retrieve all documents in collection" },
+          { cmd: "db.products.find({ price: { $gt: 50 } })", desc: "Comparison operator: price > 50" },
+          { cmd: "db.customers.find({ membership: { $in: ['Gold', 'Silver'] } })", desc: "Set inclusion with $in operator" },
+          { cmd: "db.products.find({}, { name: 1, price: 1, _id: 0 })", desc: "Projection: include specific fields and exclude _id" },
+          { cmd: "db.products.find().sort({ price: -1 }).limit(3)", desc: "Sort descending (-1) and limit to top 3" }
+        ]
+      },
+      {
+        title: "CRUD: Write & Update Operations",
+        items: [
+          { cmd: 'db.products.insertOne({ name: "Webcam", price: 59.99 })', desc: "Insert single document with auto ObjectId" },
+          { cmd: 'db.products.updateOne({ name: "Webcam" }, { $set: { stock: 20 } })', desc: "Set field value with $set operator" },
+          { cmd: 'db.products.updateOne({ name: "Webcam" }, { $inc: { stock: 5 } })', desc: "Increment numerical field with $inc" },
+          { cmd: 'db.products.updateOne({ name: "Webcam" }, { $push: { tags: "sale" } })', desc: "Append element to array field with $push" },
+          { cmd: 'db.products.deleteOne({ name: "Webcam" })', desc: "Delete first matching document" }
+        ]
+      },
+      {
+        title: "Aggregation Pipeline",
+        items: [
+          { cmd: 'db.products.aggregate([{ $match: { stock: { $gt: 0 } } }])', desc: "Filter documents through $match stage" },
+          { cmd: 'db.products.aggregate([{ $group: { _id: "$category", count: { $sum: 1 } } }])', desc: "Group by category and count documents" },
+          { cmd: 'db.products.aggregate([{ $group: { _id: "$category", avgPrice: { $avg: "$price" } } }])', desc: "Calculate average price per category" },
+          { cmd: 'db.products.aggregate([{ $sort: { price: -1 } }, { $limit: 2 }])', desc: "Pipeline sorting and limiting" }
+        ]
+      },
+      {
+        title: "mongosh Pro Tips & Modern JS",
+        items: [
+          { cmd: "for(let i=0; i<3; i++) { console.log('Loop #' + i); }", desc: "Full modern JavaScript ES6+ execution environment" },
+          { cmd: "const now = new Date(); now.toISOString()", desc: "Native Date and Node.js standard APIs built in" },
+          { cmd: "db.products.countDocuments({ stock: { $lt: 20 } })", desc: "Accurate document count instead of deprecated count()" },
+          { cmd: "db.products.getIndexes()", desc: "Inspect indexes on collection" }
+        ]
+      }
+    ];
+
+    function renderCheatsheet(filter = '') {
+      const container = document.getElementById('cheatsheetGrid');
+      if (!container) return;
+      container.innerHTML = '';
+      const term = filter.toLowerCase().trim();
+
+      CHEATSHEET_CATEGORIES.forEach(cat => {
+        const matchingItems = cat.items.filter(it => 
+          !term || it.cmd.toLowerCase().includes(term) || it.desc.toLowerCase().includes(term)
+        );
+
+        if (matchingItems.length === 0) return;
+
+        const card = document.createElement('div');
+        card.className = 'p-3.5 rounded-xl bg-[#0b2936] border border-[#113240] space-y-2';
+        
+        let itemsHtml = '';
+        matchingItems.forEach(it => {
+          itemsHtml += `
+            <div class="p-2 rounded bg-[#001e2b] border border-[#113240]/60 space-y-1">
+              <div class="flex items-center justify-between gap-1">
+                <code class="text-[#00ed64] font-mono-code text-[11px] font-semibold truncate max-w-[260px]">${escapeHtml(it.cmd)}</code>
+                <div class="flex items-center gap-1">
+                  <button class="cheat-run-btn px-2 py-0.5 rounded bg-[#00684a] hover:bg-[#00ed64] hover:text-[#001e2b] text-[#00ed64] text-[10px] font-semibold transition" data-cmd="${escapeHtml(it.cmd)}">Run</button>
+                  <button class="cheat-copy-btn px-1.5 py-0.5 rounded bg-[#113240] hover:bg-[#1a4457] text-slate-300 text-[10px] transition" data-cmd="${escapeHtml(it.cmd)}">Copy</button>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-400 leading-snug">${escapeHtml(it.desc)}</p>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#00ed64]"></span>
+            <span>${cat.title}</span>
+          </h4>
+          <div class="space-y-1.5 pt-1">${itemsHtml}</div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.querySelectorAll('.cheat-run-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cmd = e.target.dataset.cmd;
+          switchTab('terminal');
+          if (termInput) {
+            termInput.value = cmd;
+            runCommand(cmd);
+            termInput.value = '';
+          }
+          showToast('Executed in terminal!', 'info');
+        });
+      });
+
+      document.querySelectorAll('.cheat-copy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const cmd = e.target.dataset.cmd;
+          copyToClipboard(cmd);
+          showToast('Copied to clipboard', 'info');
+        });
+      });
+    }
+
+    const cheatSearchInput = document.getElementById('cheatSearchInput');
+    if (cheatSearchInput) {
+      cheatSearchInput.addEventListener('input', (e) => {
+        renderCheatsheet(e.target.value);
+      });
+    }
+
+    // --- AI TUTOR CHATBOT LOGIC & KNOWLEDGE BASE ---
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+
+    const BOT_TOPICS = {
+      welcome: {
+        title: "Welcome to mongosh Tutor!",
+        content: `👋 **Hi there! I'm MongoBot, your interactive mongosh mentor.**
+
+\`mongosh\` is the official Node.js-based replacement for the legacy \`mongo\` shell. It delivers:
+- **Full modern JavaScript (ES6+)** with async/await, loops, and Node.js APIs
+- **Syntax-highlighted** JSON output and intelligent autocompletion
+- **Consistent CRUD & Aggregation syntax** matching official MongoDB drivers
+
+⚡ **New Feature**: You can now connect your own **Gemini**, **OpenAI**, or **Local Ollama** key using the **AI Keys (BYOK)** button above for open-ended questions and natural language query generation!
+
+What would you like to explore today? You can click a topic track above, ask any question below, or try one of the quick suggestions!`,
+        suggestions: ["Find with $gt & $lt", "How does $group work?", "Updating with $inc", "Start a challenge!"]
+      },
+      basics: {
+        title: "Module 1: mongosh Basics & Navigation",
+        content: `### 🧭 mongosh Navigation & Database Commands
+
+When you start \`mongosh\`, you're connected to a MongoDB server. Here are the core navigation commands:
+
+1. **View available databases:**
+\`\`\`javascript
+show dbs
+\`\`\`
+
+2. **Switch or create a database:**
+In MongoDB, databases are created lazily upon inserting the first document.
+\`\`\`javascript
+use shop
+\`\`\`
+
+3. **Check current active database:**
+\`\`\`javascript
+db
+\`\`\`
+
+4. **List collections in current database:**
+\`\`\`javascript
+show collections
+\`\`\`
+
+5. **Inspect database statistics:**
+\`\`\`javascript
+db.stats()
+\`\`\`
+
+Try clicking **Run in Shell** on any of these commands to test them live in your terminal!`,
+        code: "show dbs"
+      },
+      crud_find: {
+        title: "Module 2: Querying Documents with find()",
+        content: `### 🔍 Finding Documents with db.<collection>.find()
+
+The \`find()\` method takes two optional arguments: \`db.collection.find(query, projection)\`.
+
+1. **Find all documents:**
+\`\`\`javascript
+db.products.find()
+\`\`\`
+
+2. **Equality filtering:**
+\`\`\`javascript
+db.products.find({ category: "Electronics" })
+\`\`\`
+
+3. **Field Projection (inclusion & exclusion):**
+Return only \`name\` and \`price\`, while suppressing \`_id\`:
+\`\`\`javascript
+db.products.find({}, { name: 1, price: 1, _id: 0 })
+\`\`\`
+
+4. **Cursor chaining (.sort, .limit, .skip):**
+Find top 3 highest priced products:
+\`\`\`javascript
+db.products.find().sort({ price: -1 }).limit(3)
+\`\`\`
+
+5. **Accurate Document Count:**
+\`\`\`javascript
+db.products.countDocuments({ category: "Electronics" })
+\`\`\``,
+        code: "db.products.find({ category: \"Electronics\" }, { name: 1, price: 1, rating: 1 })"
+      },
+      operators: {
+        title: "Module 3: Query & Comparison Operators",
+        content: `### ⚙️ Powerful Comparison & Logical Operators
+
+In MongoDB, operators start with a dollar sign (\`$\`).
+
+- **Comparison Operators:**
+  - \`$gt\` (greater than), \`$gte\` (greater than or equal)
+  - \`$lt\` (less than), \`$lte\` (less than or equal)
+  - \`$ne\` (not equal), \`$eq\` (equal)
+  - \`$in\` (matches any value in array), \`$nin\` (not in array)
+
+**Example with $gt & $lt (Price between $40 and $150):**
+\`\`\`javascript
+db.products.find({ price: { $gt: 40, $lt: 150 } })
+\`\`\`
+
+**Example with $in (Multiple categories):**
+\`\`\`javascript
+db.products.find({ category: { $in: ["Electronics", "Audio"] } })
+\`\`\`
+
+**Logical $or condition:**
+\`\`\`javascript
+db.products.find({ $or: [{ price: { $lt: 30 } }, { rating: { $gte: 4.8 } }] })
+\`\`\``,
+        code: "db.products.find({ price: { $gt: 40, $lt: 150 } })"
+      },
+      crud_update: {
+        title: "Module 4: Updating Documents with Atomic Operators",
+        content: `### 🔄 Updates with updateOne & updateMany
+
+**Never update without an atomic operator** (like \`$set\`), otherwise you risk replacing the entire document!
+
+1. **$set: Change or add specific fields:**
+\`\`\`javascript
+db.products.updateOne({ name: "Ergonomic Vertical Mouse" }, { $set: { price: 44.99 } })
+\`\`\`
+
+2. **$inc: Increment or decrement numbers:**
+Great for inventory counts, hit counters, and orders:
+\`\`\`javascript
+db.products.updateOne({ name: "Desk Mat Extended XXL" }, { $inc: { stock: 15 } })
+\`\`\`
+
+3. **$push: Append to an array:**
+\`\`\`javascript
+db.products.updateOne({ name: "Desk Mat Extended XXL" }, { $push: { tags: "bestseller" } })
+\`\`\`
+
+4. **Upsert option:**
+If the document doesn't exist, insert it:
+\`\`\`javascript
+db.products.updateOne({ name: "Gaming Headset Stand" }, { $set: { price: 29.99, stock: 10 } }, { upsert: true })
+\`\`\``,
+        code: "db.products.updateOne({ name: \"Ergonomic Vertical Mouse\" }, { $inc: { stock: 10 } })"
+      },
+      aggregation: {
+        title: "Module 5: The Aggregation Pipeline ($group, $match)",
+        content: `### ⚡ MongoDB Aggregation Framework
+
+Think of the aggregation pipeline as an assembly line where documents pass through stages:
+
+1. **Stage 1: \`$match\`** (filters input documents early)
+2. **Stage 2: \`$group\`** (groups documents by key and calculates totals)
+3. **Stage 3: \`$sort\`** (orders the computed results)
+
+**Example: Group products by category, count them, and find the average price:**
+\`\`\`javascript
+db.products.aggregate([
+  { $match: { stock: { $gt: 0 } } },
+  { 
+    $group: { 
+      _id: "$category", 
+      totalStock: { $sum: "$stock" }, 
+      avgPrice: { $avg: "$price" },
+      itemCount: { $sum: 1 } 
+    } 
+  },
+  { $sort: { avgPrice: -1 } }
+])
+\`\`\`
+
+Run this in the shell to see MongoDB group our products!`,
+        code: "db.products.aggregate([{ $group: { _id: \"$category\", totalStock: { $sum: \"$stock\" }, avgPrice: { $avg: \"$price\" } } }, { $sort: { avgPrice: -1 } }])"
+      },
+      indexes: {
+        title: "Module 6: Indexes & explain() in mongosh",
+        content: `### 🚀 Indexing & Query Performance
+
+Without indexes, MongoDB must perform a **collection scan (COLLSCAN)**, examining every single document.
+
+1. **Create an index:**
+\`\`\`javascript
+db.products.createIndex({ price: 1 })
+\`\`\`
+
+2. **Compound Index (multiple fields):**
+\`\`\`javascript
+db.products.createIndex({ category: 1, price: -1 })
+\`\`\`
+
+3. **Inspect all indexes:**
+\`\`\`javascript
+db.products.getIndexes()
+\`\`\`
+
+4. **Explain query execution plan:**
+In \`mongosh\`, you can chain \`.explain("executionStats")\` to see index utilization:
+\`\`\`javascript
+db.products.find({ price: { $gt: 50 } }).explain("executionStats")
+\`\`\``,
+        code: "db.products.getIndexes()"
+      },
+      mongosh_features: {
+        title: "Module 7: mongosh vs Legacy mongo Shell",
+        content: `### 💡 Why mongosh is so much better than legacy 'mongo'
+
+\`mongosh\` was rewritten from the ground up on modern Node.js:
+
+1. **Full JavaScript Support:**
+   - Native \`async / await\` support
+   - ES6+ syntax (arrow functions, template literals, destructuring, \`const\` / \`let\`)
+2. **Standard Node.js Modules:**
+   - Access \`fs\`, \`path\`, and npm modules directly in the shell!
+3. **Syntax Highlighting & Colorization:**
+   - Formatted JSON output with distinct colors for keys, strings, numbers, and ObjectIds.
+4. **Improved Tab Completion:**
+   - Smart autocompletion for collection names, database names, and collection methods.
+5. **Configurable (.mongoshrc.js):**
+   - You can customize your prompt, load helper functions, and configure default behaviors automatically on startup.`,
+        code: "const sample = [1, 2, 3].map(n => n * 10); sample"
+      }
+    };
+
+    function appendMessage(sender, text, codeSnippet = null) {
+      if (!chatMessages) return;
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'} space-y-1`;
+
+      let bodyHtml = formatMarkdown(text);
+
+      if (codeSnippet) {
+        bodyHtml += `
+          <div class="mt-2.5 pt-2 border-t border-[#113240]/80">
+            <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+              <span class="font-mono-code text-[#00ed64]">Runnable mongosh:</span>
+            </div>
+            <pre class="bg-[#001219] p-2.5 rounded-lg border border-[#113240] font-mono-code text-xs text-emerald-300 overflow-x-auto whitespace-pre-wrap">${escapeHtml(codeSnippet)}</pre>
+            <div class="flex items-center gap-1.5 mt-2">
+              <button class="msg-run-btn px-2.5 py-1 rounded bg-[#00684a] hover:bg-[#00ed64] hover:text-[#001e2b] text-[#00ed64] font-semibold text-xs transition flex items-center gap-1" data-code="${escapeHtml(codeSnippet)}">
+                <span>▶</span> Run in Shell
+              </button>
+              <button class="msg-insert-btn px-2.5 py-1 rounded bg-[#113240] hover:bg-[#1a4457] text-slate-200 text-xs transition" data-code="${escapeHtml(codeSnippet)}">
+                ✏️ Edit in Prompt
+              </button>
+              <button class="msg-copy-btn px-2 py-1 rounded bg-[#113240] hover:bg-[#1a4457] text-slate-400 hover:text-white text-xs transition" data-code="${escapeHtml(codeSnippet)}">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      msgDiv.innerHTML = `
+        <div class="max-w-[92%] rounded-xl p-3 sm:p-3.5 shadow-md ${sender === 'user' ? 'chat-bubble-user text-white' : 'chat-bubble-bot text-slate-100'}">
+          ${bodyHtml}
+        </div>
+      `;
+
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      msgDiv.querySelectorAll('.msg-run-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const code = e.currentTarget.dataset.code;
+          switchTab('terminal');
+          if (termInput) {
+            termInput.value = code;
+            runCommand(code);
+            termInput.value = '';
+          }
+          showToast('Command executed in mongosh terminal!', 'info');
+        });
+      });
+
+      msgDiv.querySelectorAll('.msg-insert-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const code = e.currentTarget.dataset.code;
+          switchTab('terminal');
+          if (termInput) {
+            termInput.value = code;
+            termInput.focus();
+          }
+          showToast('Loaded into terminal prompt', 'info');
+        });
+      });
+
+      msgDiv.querySelectorAll('.msg-copy-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const code = e.currentTarget.dataset.code;
+          copyToClipboard(code);
+          showToast('Copied to clipboard!', 'info');
+        });
+      });
+    }
+
+    function formatMarkdown(text) {
+      let formatted = text
+        .replace(/### (.*)/g, '<h3 class="text-sm font-bold text-[#00ed64] mt-1 mb-1">$1</h3>')
+        .replace(/## (.*)/g, '<h2 class="text-base font-bold text-white mt-1 mb-1">$1</h2>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="bg-[#001219] text-[#00ed64] px-1 py-0.2 rounded font-mono-code text-[11px]">$1</code>');
+
+      formatted = formatted.replace(/```(?:javascript|js)?\n([\s\S]*?)```/g, (m, code) => {
+        return `<pre class="bg-[#001219] p-2.5 rounded-lg border border-[#113240] font-mono-code text-xs text-sky-300 my-2 overflow-x-auto whitespace-pre-wrap">${escapeHtml(code.trim())}</pre>`;
+      });
+
+      formatted = formatted.replace(/^\s*-\s+(.*)/gm, '<li class="ml-4 list-disc text-slate-300 my-0.5">$1</li>');
+      formatted = formatted.replace(/^\s*\d+\.\s+(.*)/gm, '<li class="ml-4 list-decimal text-slate-300 my-0.5">$1</li>');
+
+      return formatted.replace(/\n\n/g, '<br><br>');
+    }
+
+    // --- LLM API CALLER & ENGINE ---
+    function buildSystemPrompt() {
+      const curDbData = dbState[currentDb] || {};
+      const colSummary = {};
+      for (const [colName, docs] of Object.entries(curDbData)) {
+        colSummary[colName] = docs.length > 0 ? docs[0] : {};
+      }
+
+      return `You are MongoBot, an interactive expert mentor for mongosh (the official modern MongoDB Shell).
+You are guiding a student practicing queries inside an in-browser sandbox terminal.
+Active database: "${currentDb}"
+Available collections and sample document schemas in the active database:
+${JSON.stringify(colSummary, null, 2)}
+
+Instructions:
+1. Explain mongosh concepts, operators, and methods clearly, accurately, and concisely.
+2. When the user asks for a query or code, ALWAYS provide executable mongosh syntax wrapped in a standard markdown code block: \`\`\`javascript ... \`\`\`.
+3. Keep queries compatible with mongosh (e.g., db.collection.find(), db.collection.aggregate([]), db.collection.updateOne()).
+4. Do NOT use semicolons at the end of single shell commands.
+5. If the user pasted an error, explain what caused it and show the corrected mongosh command.`;
+    }
+
+    async function executeLlmCall(provider, apiKey, model, endpoint, userPrompt) {
+      const systemPrompt = buildSystemPrompt();
+
+      if (provider === 'gemini') {
+        const targetModel = model || 'gemini-1.5-flash';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(targetModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        
+        const payload = {
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: userPrompt }]
+            }
+          ],
+          generationConfig: {
+            temperature: aiConfig.temperature || 0.2,
+            maxOutputTokens: 1000
+          }
+        };
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          const errMessage = (errData.error && errData.error.message) ? errData.error.message : `HTTP ${response.status} ${response.statusText}`;
+          throw new Error(`Gemini API Error: ${errMessage}`);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates && data.candidates[0];
+        if (candidate && candidate.content && candidate.content.parts) {
+          return candidate.content.parts.map(p => p.text).join('\n');
+        }
+        throw new Error('No candidate content returned by Gemini API.');
+      }
+
+      if (provider === 'openai' || provider === 'custom') {
+        const isCustom = provider === 'custom';
+        const url = isCustom 
+          ? (endpoint || 'http://localhost:11434/v1/chat/completions')
+          : 'https://api.openai.com/v1/chat/completions';
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+
+        const payload = {
+          model: model || (isCustom ? 'llama3.1' : 'gpt-4o-mini'),
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: aiConfig.temperature || 0.2
+        };
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          const errMessage = (errData.error && errData.error.message) ? errData.error.message : `HTTP ${response.status} ${response.statusText}`;
+          throw new Error(`${isCustom ? 'Custom LLM' : 'OpenAI'} API Error: ${errMessage}`);
+        }
+
+        const data = await response.json();
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          return data.choices[0].message.content;
+        }
+        throw new Error('No message choices returned by LLM API.');
+      }
+
+      throw new Error(`Unsupported provider: ${provider}`);
+    }
+
+    function extractFirstCodeSnippet(text) {
+      if (!text) return null;
+      const match = text.match(/```(?:javascript|js)?\n([\s\S]*?)```/);
+      if (match) {
+        return match[1].trim();
+      }
+      return null;
+    }
+
+    function generateBotResponse(userQuery) {
+      const q = userQuery.toLowerCase().trim();
+
+      if (q.includes('quiz') || q.includes('challenge') || q.includes('test me') || q.includes('practice')) {
+        switchTab('challenges');
+        return {
+          text: `🎯 **Here comes a challenge!**
+
+I've switched to the **Challenges tab** on the right! 
+Try tackling **Level 1** or **Level 2** directly:
+- **Level 1:** Run \`db.products.countDocuments()\` to count inventory.
+- **Level 2:** Find all Electronics products with price < 100.
+
+You can click **Run in Shell** on any challenge to test your solution, then click **Verify** to check your score!`,
+          code: 'db.products.find({ category: "Electronics", price: { $lt: 100 } })'
+        };
+      }
+
+      if (q.includes('aggregate') || q.includes('pipeline') || q.includes('group') || q.includes('$group') || q.includes('$match')) {
+        return {
+          text: BOT_TOPICS.aggregation.content,
+          code: BOT_TOPICS.aggregation.code
+        };
+      }
+
+      if (q.includes('update') || q.includes('$set') || q.includes('$inc') || q.includes('upsert') || q.includes('$push')) {
+        return {
+          text: BOT_TOPICS.crud_update.content,
+          code: BOT_TOPICS.crud_update.code
+        };
+      }
+
+      if (q.includes('operator') || q.includes('$gt') || q.includes('$lt') || q.includes('$in') || q.includes('$or') || q.includes('filter')) {
+        return {
+          text: BOT_TOPICS.operators.content,
+          code: BOT_TOPICS.operators.code
+        };
+      }
+
+      if (q.includes('find') || q.includes('query') || q.includes('projection') || q.includes('sort') || q.includes('limit')) {
+        return {
+          text: BOT_TOPICS.crud_find.content,
+          code: BOT_TOPICS.crud_find.code
+        };
+      }
+
+      if (q.includes('index') || q.includes('explain') || q.includes('performance') || q.includes('createindex')) {
+        return {
+          text: BOT_TOPICS.indexes.content,
+          code: BOT_TOPICS.indexes.code
+        };
+      }
+
+      if (q.includes('mongosh vs') || q.includes('difference') || q.includes('legacy') || q.includes('why mongosh') || q.includes('features')) {
+        return {
+          text: BOT_TOPICS.mongosh_features.content,
+          code: BOT_TOPICS.mongosh_features.code
+        };
+      }
+
+      if (q.includes('connect') || q.includes('show') || q.includes('use') || q.includes('database') || q.includes('collections') || q.includes('start') || q.includes('basics')) {
+        return {
+          text: BOT_TOPICS.basics.content,
+          code: BOT_TOPICS.basics.code
+        };
+      }
+
+      if (q.includes('delete') || q.includes('remove') || q.includes('drop')) {
+        return {
+          text: `### 🗑️ Deleting Documents & Dropping Collections
+
+1. **Delete one document matching filter:**
+\`\`\`javascript
+db.products.deleteOne({ name: "Desk Mat Extended XXL" })
+\`\`\`
+
+2. **Delete all documents matching filter:**
+\`\`\`javascript
+db.products.deleteMany({ stock: 0 })
+\`\`\`
+
+3. **Drop entire collection:**
+\`\`\`javascript
+db.products.drop()
+\`\`\`
+
+4. **Drop current active database:**
+\`\`\`javascript
+db.dropDatabase()
+\`\`\``,
+          code: 'db.products.deleteOne({ name: "Desk Mat Extended XXL" })'
+        };
+      }
+
+      return {
+        text: `Here is how you can approach that in **mongosh**:
+
+In MongoDB Shell, every operation revolves around the active \`db\` object and your target collection:
+
+\`\`\`javascript
+// 1. Basic query
+db.products.find({ category: "Electronics" })
+
+// 2. Count matching documents
+db.products.countDocuments({ price: { $gt: 50 } })
+\`\`\`
+
+⚡ *Tip: You can connect your own Gemini or OpenAI API key via **AI Keys (BYOK)** to unlock custom query generation!*`,
+        code: 'db.products.find({ price: { $gt: 50 } })'
+      };
+    }
+
+    if (chatForm) {
+      chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = chatInput.value.trim();
+        if (!query) return;
+
+        appendMessage('user', query);
+        chatInput.value = '';
+
+        // Check if Live LLM is configured and active
+        const hasLiveKey = aiConfig.provider === 'custom' || (aiConfig.provider !== 'built_in' && aiConfig.apiKey);
+
+        if (hasLiveKey) {
+          // Show typing indicator
+          const typingMsgDiv = document.createElement('div');
+          typingMsgDiv.id = 'botTypingIndicator';
+          typingMsgDiv.className = 'flex flex-col items-start space-y-1';
+          typingMsgDiv.innerHTML = `
+            <div class="rounded-xl p-3 bg-[#0b2936] border border-[#113240] text-slate-400 text-xs flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#00ed64] animate-ping"></span>
+              <span>MongoBot is thinking via <strong>${aiConfig.provider.toUpperCase()} (${aiConfig.model})</strong>...</span>
+            </div>
+          `;
+          chatMessages.appendChild(typingMsgDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+
+          try {
+            const rawResponse = await executeLlmCall(
+              aiConfig.provider,
+              aiConfig.apiKey,
+              aiConfig.model,
+              aiConfig.endpoint,
+              query
+            );
+            typingMsgDiv.remove();
+
+            const codeSnippet = extractFirstCodeSnippet(rawResponse);
+            appendMessage('bot', rawResponse, codeSnippet);
+          } catch (llmErr) {
+            typingMsgDiv.remove();
+            appendMessage('bot', `⚠️ **AI API Error (${aiConfig.provider.toUpperCase()}):** ${escapeHtml(llmErr.message)}\n\nFalling back to built-in knowledge response below:\n\n${generateBotResponse(query).text}`, generateBotResponse(query).code);
+            showToast('AI call failed: ' + llmErr.message, 'error');
+          }
+        } else {
+          // Offline built-in engine
+          setTimeout(() => {
+            const resp = generateBotResponse(query);
+            appendMessage('bot', resp.text, resp.code || null);
+          }, 250);
+        }
+      });
+    }
+
+    document.querySelectorAll('.track-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const topicKey = e.currentTarget.dataset.topic;
+        const topic = BOT_TOPICS[topicKey];
+        if (topic) {
+          appendMessage('bot', topic.content, topic.code || null);
+        }
+      });
+    });
+
+    document.querySelectorAll('.pill-prompt').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const query = e.currentTarget.dataset.query;
+        if (chatInput) {
+          chatInput.value = query;
+          chatForm.dispatchEvent(new Event('submit'));
+        }
+      });
+    });
+
+    const btnClearChat = document.getElementById('btnClearChat');
+    if (btnClearChat) {
+      btnClearChat.addEventListener('click', () => {
+        if (chatMessages) chatMessages.innerHTML = '';
+        appendMessage('bot', BOT_TOPICS.welcome.content);
+        showToast('Chat history cleared', 'info');
+      });
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      loadSavedAiConfig();
+      initTerminal();
+      renderExplorer();
+      renderChallenges();
+      renderCheatsheet();
+      updateProgressBadge();
+      appendMessage('bot', BOT_TOPICS.welcome.content);
+    };
+  </script>
+</body>
+</html>
